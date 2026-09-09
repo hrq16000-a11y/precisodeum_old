@@ -92,6 +92,7 @@ import { ContactWindowPicker } from '@/components/leads/ContactWindowPicker';
 import { normalizeContactHours, type PreferredWindow } from '@/lib/contactWindow';
 import { resolveWhatsappVariant, getWhatsappCtaLabel, ctaSourceTag } from '@/lib/ctaVariants';
 import { createVisibilityFrameScheduler } from '@/lib/visibilityFrameScheduler';
+import { recordVisibilitySample, printVisibilityPerfReport } from '@/lib/dev/visibilityPerfReport';
 
 /** Fire-and-forget contact click tracker */
 const getLeadSource = () => {
@@ -794,6 +795,7 @@ const ProviderProfile = () => {
         visibilityMetrics.calls += 1;
         visibilityMetrics.totalMs += duration;
         visibilityMetrics.maxMs = Math.max(visibilityMetrics.maxMs, duration);
+        recordVisibilitySample('ProviderProfile', duration);
         if (now - visibilityMetrics.lastReportAt >= 2000) {
           console.debug('[StickyActionBar] measureVisibility metrics', {
             calls: visibilityMetrics.calls,
@@ -806,6 +808,7 @@ const ProviderProfile = () => {
             maxMs: Number(visibilityMetrics.maxMs.toFixed(3)),
             lastSource: visibilityMetrics.lastSource,
           });
+          printVisibilityPerfReport();
           visibilityMetrics.lastReportAt = now;
         }
       }
