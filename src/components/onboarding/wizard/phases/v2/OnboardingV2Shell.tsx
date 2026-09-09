@@ -1658,8 +1658,8 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
       if (reusedExistingService && resolvedServiceId) {
         const detailsPatch: Record<string, any> = {
           service_name: resolvedCategoryName,
+          // Sem `category_ids`: a coluna não existe em `services`.
           category_id: categoryId,
-          category_ids: [categoryId, ...s.category_ids.slice(1)],
         };
         // Mapa fonte→campo para registrar quais opcionais foram pulados
         // (draft incompleto). Observabilidade pura: NÃO altera o patch.
