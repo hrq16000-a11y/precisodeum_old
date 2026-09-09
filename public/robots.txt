@@ -12,6 +12,7 @@ Allow: /como-funciona
 Disallow: /admin/
 Disallow: /login
 Disallow: /cadastro
+Disallow: /dashboard
 Disallow: /dashboard/
 Disallow: /reset-password
 Disallow: /preview/
