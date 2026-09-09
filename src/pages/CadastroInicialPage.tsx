@@ -258,6 +258,10 @@ export default function CadastroInicialPage() {
   const [, setIsLeaderState] = useState(false);
   useEffect(() => {
     let mounted = true;
+    // IMPORTANTE: `window.setTimeout` devolve um NUMBER. Anexar propriedade
+    // (`timer._interval = id`) lança TypeError em modo estrito e derrubava a
+    // página inteira no ErrorGuard. Guardamos o id em variável local.
+    let intervalId: number | undefined;
     const graceTimer = window.setTimeout(() => {
       if (!mounted) return;
       const evaluate = () => {
@@ -270,16 +274,15 @@ export default function CadastroInicialPage() {
       };
 
       evaluate();
-      const id = window.setInterval(evaluate, 3000);
-      (graceTimer as any)._interval = id;
+      intervalId = window.setInterval(evaluate, 3000);
     }, 2000);
     return () => {
       mounted = false;
-      const id = (graceTimer as any)._interval as number | undefined;
-      if (id) window.clearInterval(id);
+      if (intervalId !== undefined) window.clearInterval(intervalId);
       window.clearTimeout(graceTimer);
     };
   }, []);
+
 
   useEffect(() => {
     if (showConcurrentWarning) {

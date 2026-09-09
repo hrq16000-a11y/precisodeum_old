@@ -307,7 +307,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       succeeded: !!profileData && !permissionDenied,
     } as any).then(() => undefined, () => undefined);
 
-    if (!profileData) {
+    // Só reportamos falha real: chamadas canceladas (abort por nova chamada,
+    // unmount ou geração obsoleta) NÃO são erro e poluíam o error_reports.
+    if (!profileData && !ctrl.signal.aborted && !isStale()) {
       reportError({
         errorMessage: `Profile fetch timeout after ${MAX_ATTEMPTS} attempts (${elapsedMs}ms)${lastErrorMessage ? ` — last error: ${lastErrorMessage}` : ''}`,
         componentName: 'useAuth',
@@ -318,6 +320,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.warn('[useAuth] reportError(profile_timeout) failed', err);
       });
     }
+
 
 
     if (isStale()) return profileData ?? null;
