@@ -808,6 +808,7 @@ const ProviderProfile = () => {
             maxMs: Number(visibilityMetrics.maxMs.toFixed(3)),
             lastSource: visibilityMetrics.lastSource,
           });
+          printVisibilityPerfReport();
           visibilityMetrics.lastReportAt = now;
         }
       }
