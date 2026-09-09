@@ -1712,6 +1712,23 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
         }
       }
 
+      // 1b) Categorias do serviço vivem em `service_categories` (N:N).
+      // Fail-soft: nunca bloqueia a conclusão do cadastro.
+      if (resolvedServiceId) {
+        const allCategoryIds = Array.from(
+          new Set([categoryId, ...(s.category_ids || [])].filter(Boolean)),
+        ) as string[];
+        if (allCategoryIds.length > 0) {
+          const { error: catErr } = await (supabase as any)
+            .from('service_categories')
+            .upsert(
+              allCategoryIds.map((cid) => ({ service_id: resolvedServiceId, category_id: cid })),
+              { onConflict: 'service_id,category_id', ignoreDuplicates: true },
+            );
+          if (catErr) console.warn('[onboardingV2] sync service_categories falhou', catErr);
+        }
+      }
+
       // 2) Herança — categoria principal + horário sobem para o provider
       const updates: any = { category_id: categoryId };
       if (workingHoursSummary) updates.working_hours = workingHoursSummary;
