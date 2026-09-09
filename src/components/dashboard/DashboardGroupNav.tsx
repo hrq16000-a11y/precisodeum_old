@@ -69,19 +69,23 @@ const DashboardGroupNav = () => {
   return (
     <div className="mb-5 -mx-1">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 mb-2.5 px-1">
-        <Link to="/dashboard" className="text-[10px] text-muted-foreground/70 hover:text-muted-foreground transition-colors">
-          <Home className="h-3 w-3" />
+      <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 mb-2.5 px-1">
+        <Link
+          to="/dashboard"
+          aria-label="Início do painel"
+          className="rounded text-[10px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Home className="h-3 w-3" aria-hidden="true" />
         </Link>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/30" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {currentGroup.label}
         </span>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/30" />
-        <span className="text-[10px] font-semibold text-foreground/80">
+        <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+        <span aria-current="page" className="text-[10px] font-semibold text-foreground">
           {currentGroup.items.find(i => i.path === location.pathname)?.label}
         </span>
-      </div>
+      </nav>
 
       {/* Enhanced tab bar */}
       <ScrollArea className="w-full">

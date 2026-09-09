@@ -38,13 +38,19 @@ interface LogoProps {
   context?: LogoContext;
   /** Injeta <link rel="preload"> da logo (use apenas no Header). */
   preload?: boolean;
+  /**
+   * Texto alternativo. Use `alt=""` quando a logo estiver dentro de um link
+   * que já possui `aria-label` — evita nome acessível duplicado.
+   */
+  alt?: string;
 }
 
 /** Fallback embutido: nunca deixa buraco no header se a imagem falhar. */
-const LogoFallbackSvg = ({ className = '', sizeClass = '' }: { className?: string; sizeClass?: string }) => (
+const LogoFallbackSvg = ({ className = '', sizeClass = '', label = 'Preciso de um Profissional' }: { className?: string; sizeClass?: string; label?: string }) => (
   <svg
-    role="img"
-    aria-label="Preciso de um Profissional"
+    role={label ? 'img' : 'presentation'}
+    aria-hidden={label ? undefined : true}
+    aria-label={label || undefined}
     viewBox="0 0 111 40"
     className={`block w-auto shrink-0 ${sizeClass} ${className}`}
     data-logo-fallback="true"
@@ -96,6 +102,7 @@ const Logo = ({
   sizes,
   context = 'header',
   preload = false,
+  alt = 'Preciso de um Profissional',
 }: LogoProps) => {
   const logo = DEFAULT_LOGO_URL;
   const sizeClass = LOGO_SIZE_CLASSES[context];
@@ -120,7 +127,7 @@ const Logo = ({
     : '';
 
   if (state === 'failed') {
-    const svg = <LogoFallbackSvg className={className} sizeClass={sizeClass} />;
+    const svg = <LogoFallbackSvg className={className} sizeClass={sizeClass} label={alt} />;
     return linkTo ? <Link to={linkTo}>{svg}</Link> : svg;
   }
 
@@ -139,7 +146,8 @@ const Logo = ({
           src={logo}
           srcSet={DEFAULT_LOGO_PNG_SRCSET}
           sizes={sizesAttr}
-          alt="Preciso de um Profissional"
+          alt={alt}
+          {...(alt === '' ? { 'aria-hidden': true as const } : {})}
           className={`block w-auto max-w-full shrink-0 object-contain transition-opacity duration-200 ${sizeClass} ${LOGO_ASPECT_CLASS} ${
             state === 'loaded' ? 'opacity-100' : 'opacity-0'
           } ${filterClass} ${className}`}

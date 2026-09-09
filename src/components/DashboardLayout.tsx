@@ -128,30 +128,39 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex min-h-screen bg-background">
       <TopLoadingBar />
       {/* Mobile header */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-border glass-strong px-4 lg:hidden">
+      <header
+        aria-label="Cabeçalho do painel"
+        className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-border glass-strong px-4 lg:hidden"
+      >
         <Link
           to="/"
           aria-label="Ir para a página inicial"
-          className="flex h-14 min-w-0 max-w-[calc(100%-6rem)] items-center overflow-hidden"
+          className="flex h-14 min-w-0 max-w-[calc(100%-6rem)] items-center overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Logo
             linkTo=""
             context="dashboard"
             priority
+            alt=""
             className="drop-shadow-xs"
           />
         </Link>
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={handleSignOut}
             aria-label="Sair da conta"
-            className="text-destructive p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <LogOut className="h-5 w-5" />
           </button>
           <motion.button
+            type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-foreground p-1 rounded-lg hover:bg-muted/50 transition-colors"
+            aria-label={sidebarOpen ? 'Fechar menu do painel' : 'Abrir menu do painel'}
+            aria-expanded={sidebarOpen}
+            aria-controls="dashboard-sidebar"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             whileTap={{ scale: 0.9 }}
           >
             <AnimatePresence mode="wait">
@@ -167,15 +176,29 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </AnimatePresence>
           </motion.button>
         </div>
-      </div>
+      </header>
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-60 flex flex-col transform border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} pt-14 lg:pt-0`}>
+      <aside
+        id="dashboard-sidebar"
+        aria-label="Menu do painel"
+        className={`fixed inset-y-0 left-0 z-40 w-60 flex flex-col transform border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} pt-14 lg:pt-0`}
+      >
         <div className="flex h-14 shrink-0 items-center justify-between px-5 border-b border-sidebar-border">
-          <Link to="/" aria-label="Ir para a página inicial" className="flex min-w-0 flex-1 items-center overflow-hidden pr-3">
-            <Logo linkTo="" context="dashboard" variant="white" priority />
+          <Link
+            to="/"
+            aria-label="Ir para a página inicial"
+            className="flex min-w-0 flex-1 items-center overflow-hidden rounded-lg pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Logo linkTo="" context="dashboard" variant="white" priority alt="" />
           </Link>
-          <Link to="/" className="text-[9px] text-sidebar-foreground/30 hover:text-sidebar-foreground/50 transition-colors font-medium">← Site</Link>
+          <Link
+            to="/"
+            className="rounded px-1 text-[10px] font-medium text-sidebar-foreground/70 transition-colors hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span aria-hidden="true">←</span> Site
+            <span className="sr-only">: voltar para o site público</span>
+          </Link>
         </div>
 
         {/* User info card */}
@@ -200,7 +223,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             )}
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-sidebar-foreground truncate">{profile?.full_name || 'Usuário'}</p>
-              <p className="text-[10px] text-sidebar-foreground/50 truncate">
+              <p className="text-[11px] text-sidebar-foreground/80 truncate">
                 {isClient ? 'Cliente' : isRH ? 'RH' : 'Profissional'}
               </p>
             </div>
@@ -209,7 +232,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           {isProvider && (
             <div className="mt-2">
               <div className="flex items-center justify-between mb-0.5">
-                <span className="text-[9px] text-sidebar-foreground/40">Cadastro</span>
+                <span className="text-[10px] text-sidebar-foreground/80">Cadastro</span>
                 <span className={`text-[9px] font-bold ${onbPublishable ? 'text-emerald-400' : 'text-accent'}`}>
                   {onbPercent}%{onbPublishable ? ' • pronto' : ''}
                 </span>
@@ -226,7 +249,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           )}
         </motion.div>
 
-        <nav className="flex-1 overflow-y-auto overscroll-contain mt-2 space-y-0.5 px-3 pb-4">
+        <nav aria-label="Navegação principal do painel" className="flex-1 overflow-y-auto overscroll-contain mt-2 space-y-0.5 px-3 pb-4">
           {menuItems.map((item, i) => {
             const active = isDashboardNavItemActive(location.pathname, item.path);
             return (
