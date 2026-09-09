@@ -1075,9 +1075,12 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
           whatsapp: state.profile.whatsapp || null,
           service_area: state.service.cities_served?.join('; ') || null,
           address: cityAddress || null,
-          working_hours: state.service.working_hours || null,
+          // `working_hours` é NOT NULL no banco: nunca enviar null aqui, senão
+          // o primeiro serviço falha com 23502 e o cadastro trava.
+          working_hours: state.service.working_hours || 'A combinar',
+          // `services` NÃO tem coluna `category_ids` (PGRST204). A associação
+          // múltipla vive em `service_categories`.
           category_id: categoryId,
-          category_ids: [categoryId],
         } as any)
         .select('id')
         .single();

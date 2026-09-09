@@ -10720,6 +10720,16 @@ export type Database = {
         }[]
       }
       get_lead_stats: { Args: { provider_id: string }; Returns: Json }
+      get_local_ranking: {
+        Args: { _category_id?: string; _city: string }
+        Returns: {
+          ahead_in_category: number
+          ahead_in_city: number
+          top_competitor: string
+          total_in_category: number
+          total_in_city: number
+        }[]
+      }
       get_missed_opportunities: {
         Args: { _provider_id: string }
         Returns: {
@@ -11780,6 +11790,10 @@ export type Database = {
           _status?: string
         }
         Returns: undefined
+      }
+      set_provider_tax_doc: {
+        Args: { _cnpj?: string; _cpf?: string }
+        Returns: boolean
       }
       slugify_text: { Args: { _text: string }; Returns: string }
       sponsor_can_create_campaign: {

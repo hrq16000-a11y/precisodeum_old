@@ -212,6 +212,11 @@ export function useOnboardingStatus(): OnboardingStatus {
   const items: OnboardingChecklistItem[] = useMemo(() => {
     const p: any = profile || {};
     const pr: any = provider || {};
+    // `profiles` não é carregado com whatsapp/phone no useAuth — o contato
+    // canônico do profissional vive em `providers`. Sem este fallback o
+    // checklist acusa "Falta: WhatsApp" mesmo com o número salvo.
+    const whatsappValue = pr.whatsapp || p.whatsapp;
+    const phoneValue = pr.phone || p.phone;
     return [
       {
         key: 'name',
@@ -225,7 +230,7 @@ export function useOnboardingStatus(): OnboardingStatus {
         key: 'whatsapp',
         label: 'WhatsApp',
         description: 'Canal principal de contato dos leads.',
-        done: isValidBrPhone(p.whatsapp),
+        done: isValidBrPhone(whatsappValue),
         required: true,
         cta: { label: 'Editar perfil', to: '/dashboard/perfil' },
       },
@@ -233,7 +238,7 @@ export function useOnboardingStatus(): OnboardingStatus {
         key: 'location',
         label: 'Cidade e estado',
         description: 'Define em quais regiões você aparece.',
-        done: !!(p.city && p.state && String(p.state).trim().length === 2),
+        done: !!((p.city || pr.city) && (p.state || pr.state) && String(p.state || pr.state).trim().length === 2),
         required: true,
         cta: { label: 'Editar perfil', to: '/dashboard/perfil' },
       },
@@ -265,7 +270,7 @@ export function useOnboardingStatus(): OnboardingStatus {
         key: 'phone',
         label: 'Telefone alternativo',
         description: 'Aumenta a chance do cliente te alcançar.',
-        done: isValidBrPhone(p.phone) && (p.phone || '').replace(/\D/g, '') !== (p.whatsapp || '').replace(/\D/g, ''),
+        done: isValidBrPhone(phoneValue) && (phoneValue || '').replace(/\D/g, '') !== (whatsappValue || '').replace(/\D/g, ''),
         required: false,
         cta: { label: 'Editar perfil', to: '/dashboard/perfil' },
       },
