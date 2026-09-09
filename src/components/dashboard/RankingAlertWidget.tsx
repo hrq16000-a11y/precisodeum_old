@@ -19,67 +19,27 @@ const RankingAlertWidget = () => {
     if (!provider?.id || !provider?.city) { setLoading(false); return; }
 
     (async () => {
-      const myPoints = profile?.engagement_points || 0;
+      // Ranking calculado por RPC SECURITY DEFINER (`get_local_ranking`).
+      // O embed antigo `profiles!inner(...)` não existe como FK → 400 PGRST200.
+      const { data, error } = await (supabase as any).rpc('get_local_ranking', {
+        _city: provider.city,
+        _category_id: provider.category_id ?? null,
+      });
+      if (error) { setLoading(false); return; }
+      const row = Array.isArray(data) ? data[0] : data;
 
-      const queries: any[] = [
-        supabase
-          .from('providers')
-          .select('id', { count: 'estimated', head: true })
-          .eq('city', provider.city)
-          .eq('status', 'approved')
-          .is('deleted_at', null)
-          .then(),
-        supabase
-          .from('providers')
-          .select('id, profiles!inner(engagement_points)', { count: 'estimated', head: true })
-          .eq('city', provider.city)
-          .eq('status', 'approved')
-          .is('deleted_at', null)
-          .gt('profiles.engagement_points', myPoints)
-          .then(),
-      ];
-
-      // Category-specific ranking if provider has category
-      if (provider.category_id) {
-        queries.push(
-          supabase
-            .from('providers')
-            .select('id', { count: 'estimated', head: true })
-            .eq('city', provider.city)
-            .eq('category_id', provider.category_id)
-            .eq('status', 'approved')
-            .is('deleted_at', null)
-            .then(),
-          supabase
-            .from('providers')
-            .select('id, business_name, profiles!inner(engagement_points)', { count: 'estimated', head: false })
-            .eq('city', provider.city)
-            .eq('category_id', provider.category_id)
-            .eq('status', 'approved')
-            .is('deleted_at', null)
-            .gt('profiles.engagement_points', myPoints)
-            .order('profiles(engagement_points)', { ascending: false } as any)
-            .limit(1)
-            .then(),
-        );
-      }
-
-      const results = await Promise.all(queries);
-
-      const total = results[0].count ?? 0;
-      const pos = (results[1].count ?? 0) + 1;
+      const total = row?.total_in_city ?? 0;
+      const pos = (row?.ahead_in_city ?? 0) + 1;
 
       setTotalInCity(total);
       setCurrentPos(pos);
 
-      if (results.length > 2 && provider.category_id) {
-        setTotalInCategory(results[2].count ?? 0);
-        const catAhead = results[3].data?.length ?? 0;
-        setCategoryPos(catAhead + 1);
-        if (results[3].data?.[0]?.business_name) {
-          setTopCompetitorName(results[3].data[0].business_name);
-        }
+      if (provider.category_id) {
+        setTotalInCategory(row?.total_in_category ?? 0);
+        setCategoryPos((row?.ahead_in_category ?? 0) + 1);
+        setTopCompetitorName(row?.top_competitor ?? null);
       }
+
 
       // Store previous in localStorage for real tracking
       const storageKey = `ranking_${provider.id}`;

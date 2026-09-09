@@ -18,27 +18,17 @@ const RankingStatus = () => {
     if (!provider?.id || !provider?.city) { setLoading(false); return; }
 
     (async () => {
-      // Count approved providers in same city
-      const { count: total } = await supabase
-        .from('providers')
-        .select('id', { count: 'estimated', head: true })
-        .eq('city', provider.city)
-        .eq('status', 'approved')
-        .is('deleted_at', null);
-
-      setTotalInCity(total ?? 0);
-
-      // Estimate position: count providers with more engagement points
-      const myPoints = profile?.engagement_points || 0;
-      const { count: ahead } = await supabase
-        .from('providers')
-        .select('id, profiles!inner(engagement_points)', { count: 'estimated', head: true })
-        .eq('city', provider.city)
-        .eq('status', 'approved')
-        .is('deleted_at', null)
-        .gt('profiles.engagement_points', myPoints);
-
-      setPosition((ahead ?? 0) + 1);
+      // Não existe FK providers→profiles: o embed `profiles!inner(...)` retorna
+      // 400 (PGRST200). O cálculo roda em RPC SECURITY DEFINER, que também evita
+      // expor pontos de outros usuários no cliente.
+      const { data, error } = await (supabase as any).rpc('get_local_ranking', {
+        _city: provider.city,
+        _category_id: null,
+      });
+      if (error) { setLoading(false); return; }
+      const row = Array.isArray(data) ? data[0] : data;
+      setTotalInCity(row?.total_in_city ?? 0);
+      setPosition((row?.ahead_in_city ?? 0) + 1);
       setLoading(false);
     })();
   }, [provider?.id, provider?.city, profile?.engagement_points]);

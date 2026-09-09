@@ -1075,9 +1075,12 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
           whatsapp: state.profile.whatsapp || null,
           service_area: state.service.cities_served?.join('; ') || null,
           address: cityAddress || null,
-          working_hours: state.service.working_hours || null,
+          // `working_hours` é NOT NULL no banco: nunca enviar null aqui, senão
+          // o primeiro serviço falha com 23502 e o cadastro trava.
+          working_hours: state.service.working_hours || 'A combinar',
+          // `services` NÃO tem coluna `category_ids` (PGRST204). A associação
+          // múltipla vive em `service_categories`.
           category_id: categoryId,
-          category_ids: [categoryId],
         } as any)
         .select('id')
         .single();
@@ -1589,8 +1592,9 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
                   address: cityForAddress || null,
                   working_hours: workingHoursSummary || null,
                   working_hours_struct: s.working_hours_struct ?? null,
+                  // `services` não tem `category_ids` (PGRST204); categorias
+                  // extras vão para `service_categories` mais abaixo.
                   category_id: categoryId,
-                  category_ids: [categoryId, ...s.category_ids.slice(1)],
                 } as any)
                 .select('id')
                 .single();
@@ -1654,8 +1658,8 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
       if (reusedExistingService && resolvedServiceId) {
         const detailsPatch: Record<string, any> = {
           service_name: resolvedCategoryName,
+          // Sem `category_ids`: a coluna não existe em `services`.
           category_id: categoryId,
-          category_ids: [categoryId, ...s.category_ids.slice(1)],
         };
         // Mapa fonte→campo para registrar quais opcionais foram pulados
         // (draft incompleto). Observabilidade pura: NÃO altera o patch.
@@ -1705,6 +1709,23 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
               fields_skipped: fieldsSkipped,
             },
           });
+        }
+      }
+
+      // 1b) Categorias do serviço vivem em `service_categories` (N:N).
+      // Fail-soft: nunca bloqueia a conclusão do cadastro.
+      if (resolvedServiceId) {
+        const allCategoryIds = Array.from(
+          new Set([categoryId, ...(s.category_ids || [])].filter(Boolean)),
+        ) as string[];
+        if (allCategoryIds.length > 0) {
+          const { error: catErr } = await (supabase as any)
+            .from('service_categories')
+            .upsert(
+              allCategoryIds.map((cid) => ({ service_id: resolvedServiceId, category_id: cid })),
+              { onConflict: 'service_id,category_id', ignoreDuplicates: true },
+            );
+          if (catErr) console.warn('[onboardingV2] sync service_categories falhou', catErr);
         }
       }
 

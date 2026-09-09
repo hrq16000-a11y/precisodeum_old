@@ -709,8 +709,15 @@ export default function BetModeShell({ onInternalHandoff, onPhaseChange, seedSta
               typeof (providerPayload as any).geo_source_confidence === 'number' &&
               (providerPayload as any).geo_source_confidence <= 100,
           });
+          // CPF/CNPJ NÃO podem ir no upsert: `authenticated` não tem SELECT
+          // nessas colunas (privacidade), e `ON CONFLICT DO UPDATE SET cpf =
+          // excluded.cpf` exige SELECT → 42501 "permission denied for table
+          // providers". Gravamos o documento depois, via RPC SECURITY DEFINER
+          // restrita à própria linha (`set_provider_tax_doc`).
+          const { cpf: _cpfOmit, cnpj: _cnpjOmit, ...providerPayloadSafe } =
+            providerPayload as Record<string, unknown>;
           const { error } = await (supabase as any)
-            .from('providers').upsert(providerPayload, { onConflict: 'user_id' });
+            .from('providers').upsert(providerPayloadSafe, { onConflict: 'user_id' });
           if (error) {
             // Observabilidade: registra o motivo REAL do upsert antes do fallback.
             console.warn('[BetModeShell] providers.upsert falhou — caindo para insert puro', {
@@ -739,8 +746,8 @@ export default function BetModeShell({ onInternalHandoff, onPhaseChange, seedSta
               variant: 'v1',
               context: { action: 'bet_finish_pro_upsert_failed', isPj, hasDoc: !!taxIdValue },
             });
-            // Fallback: tenta insert puro
-            const { error: insErr } = await (supabase as any).from('providers').insert(providerPayload);
+            // Fallback: tenta insert puro (sem documento — ver comentário acima).
+            const { error: insErr } = await (supabase as any).from('providers').insert(providerPayloadSafe);
             if (insErr) throw insErr;
           }
           return true;
@@ -760,6 +767,27 @@ export default function BetModeShell({ onInternalHandoff, onPhaseChange, seedSta
         return;
       }
       sync.mark('provider', true);
+
+      // Documento (CPF/CNPJ) gravado por RPC SECURITY DEFINER — nunca bloqueia
+      // o cadastro: o documento é opcional nesta etapa.
+      if (taxIdValue) {
+        try {
+          const { error: docErr } = await (supabase as any).rpc('set_provider_tax_doc', {
+            _cpf: cpf,
+            _cnpj: cnpj,
+          });
+          if (docErr) throw docErr;
+        } catch (docErr) {
+          logWizardError({
+            phase: 'phase1_contact',
+            userId: user?.id,
+            error: docErr,
+            variant: 'v1',
+            context: { action: 'bet_finish_pro_tax_doc_failed', isPj },
+          });
+        }
+      }
+
 
       clearBetDraft();
       if (user?.id) await clearRemoteBetDraft(user.id);
