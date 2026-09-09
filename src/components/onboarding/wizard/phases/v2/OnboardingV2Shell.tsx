@@ -1592,8 +1592,9 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
                   address: cityForAddress || null,
                   working_hours: workingHoursSummary || null,
                   working_hours_struct: s.working_hours_struct ?? null,
+                  // `services` não tem `category_ids` (PGRST204); categorias
+                  // extras vão para `service_categories` mais abaixo.
                   category_id: categoryId,
-                  category_ids: [categoryId, ...s.category_ids.slice(1)],
                 } as any)
                 .select('id')
                 .single();
