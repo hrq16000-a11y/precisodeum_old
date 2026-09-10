@@ -24,10 +24,18 @@ vi.mock('@/integrations/supabase/client', () => ({
 const toastError = vi.fn();
 const toastSuccess = vi.fn();
 vi.mock('sonner', () => ({
-  toast: {
+  toast: Object.assign(vi.fn(), {
     error: (m: string) => toastError(m),
     success: (m: string) => toastSuccess(m),
-  },
+    info: vi.fn(),
+    warning: vi.fn(),
+    message: vi.fn(),
+    loading: vi.fn(() => 'toast-id'),
+    custom: vi.fn(),
+    promise: vi.fn(),
+    dismiss: vi.fn(),
+  }),
+  Toaster: () => null,
 }));
 
 const LEAD_ID = '11111111-1111-1111-1111-111111111111';
@@ -40,13 +48,13 @@ async function setupWithUploadedFile() {
   );
   // Simula seleção de arquivo válido (PDF pequeno)
   const file = new File([new Uint8Array([1, 2, 3])], 'cnpj.pdf', { type: 'application/pdf' });
-  const inputs = utils.container.querySelectorAll<HTMLInputElement>('input[type=file]');
+  const inputs = document.body.querySelectorAll<HTMLInputElement>('input[type=file]');
   await act(async () => {
     fireEvent.change(inputs[0], { target: { files: [file] } });
   });
   await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
   // Marca os 3 checkboxes
-  const checkboxes = utils.container.querySelectorAll<HTMLButtonElement>('button[role=checkbox]');
+  const checkboxes = document.body.querySelectorAll<HTMLButtonElement>('button[role=checkbox]');
   for (const cb of Array.from(checkboxes)) {
     await act(async () => { fireEvent.click(cb); });
   }

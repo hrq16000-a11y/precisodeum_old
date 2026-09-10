@@ -12,6 +12,11 @@ import {
   Link as TSLink,
   Navigate as TSNavigate,
   Outlet as TSOutlet,
+  RouterContextProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  createMemoryHistory,
 } from "@tanstack/react-router";
 import { useMemo, useCallback, forwardRef, type ComponentProps, type ReactNode } from "react";
 
@@ -187,11 +192,26 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavL
 // ---------- MemoryRouter (test-compat only) ----------
 
 /**
- * Compat de compilação para testes legados que envolviam componentes em
- * <MemoryRouter>. O router real vem do RouterProvider do app; aqui apenas
- * renderizamos os filhos. Testes que dependem de navegação real precisam
- * ser religados ao setup TanStack (follow-up).
+ * Compat para testes legados: renderiza os filhos diretamente (render síncrono,
+ * como o react-router v6 fazia) e injeta um router TanStack em memória no
+ * contexto, para que <Link>/useLocation funcionem fora do RouterProvider real.
  */
-export function MemoryRouter({ children }: { children?: ReactNode; initialEntries?: string[] }) {
-  return <>{children}</>;
+export function MemoryRouter({ children, initialEntries }: { children?: ReactNode; initialEntries?: string[] }) {
+  const router = useMemo(() => {
+    const rootRoute = createRootRoute({ component: () => null });
+    const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => null });
+    const splatRoute = createRoute({ getParentRoute: () => rootRoute, path: "$", component: () => null });
+    rootRoute.addChildren([indexRoute, splatRoute]);
+    const r = createRouter({
+      routeTree: rootRoute,
+      history: createMemoryHistory({ initialEntries: initialEntries?.length ? initialEntries : ["/"] }),
+    });
+    // Popula router.state.matches sem montar o RouterProvider.
+    try { (r as unknown as { load: () => void }).load(); } catch { /* noop */ }
+    return r;
+  }, []);
+
+  return <RouterContextProvider router={router as never}>{children}</RouterContextProvider>;
 }
+
+

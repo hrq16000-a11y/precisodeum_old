@@ -37,14 +37,23 @@ vi.mock("@/components/onboarding/wizard/WizardShell", () => ({
   default: () => <div data-testid="wizard-shell">WIZARD_OK</div>,
 }));
 
-vi.mock("sonner", () => ({
-  toast: {
-    error: vi.fn(),
-    warning: vi.fn(),
-    message: vi.fn(),
-    success: vi.fn(),
-  },
-}));
+vi.mock("sonner", () => {
+  const fn = () => vi.fn(() => "toast-id");
+  return {
+    toast: Object.assign(vi.fn(), {
+      error: fn(),
+      warning: fn(),
+      message: fn(),
+      success: fn(),
+      info: fn(),
+      loading: fn(),
+      custom: fn(),
+      promise: fn(),
+      dismiss: fn(),
+    }),
+    Toaster: () => null,
+  };
+});
 
 import CadastroInicialPage from "@/pages/CadastroInicialPage";
 
