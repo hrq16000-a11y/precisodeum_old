@@ -9964,6 +9964,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_provider_city_performance: {
+        Args: { _city?: string; _days?: number }
+        Returns: {
+          city: string
+          leads: number
+          profile_clicks: number
+          provider_id: string
+          provider_name: string
+          state: string
+          views: number
+          whatsapp_clicks: number
+        }[]
+      }
       admin_provider_conversion_insights: {
         Args: { _days?: number; _limit?: number }
         Returns: {
@@ -10122,6 +10135,17 @@ export type Database = {
           providers_created: number
           visitors: number
           wizard_started: number
+        }[]
+      }
+      admin_signup_funnel_steps: {
+        Args: { _days?: number }
+        Returns: {
+          completed: number
+          drop_off: number
+          drop_pct: number
+          entered: number
+          errors: number
+          phase: string
         }[]
       }
       admin_sponsor_metrics_summary: {

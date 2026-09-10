@@ -53,6 +53,10 @@ test.describe('Signup → logout → login (multi-viewport)', () => {
 
       // ---- Signup
       await page.goto('/cadastro', { waitUntil: 'domcontentloaded' });
+      // Espera a hidratação: antes dela o submit vira navegação nativa e o teste falha por engano.
+      await page.waitForFunction(() => document.documentElement.dataset['hydrated'] === '1', null, {
+        timeout: 30_000,
+      }).catch(() => page.waitForTimeout(4000));
       await page.getByLabel(/e-?mail/i).first().fill(email);
       await page.getByLabel(/^senha$/i).first().fill(password);
       await page.getByRole('button', { name: /^continuar$/i }).click();

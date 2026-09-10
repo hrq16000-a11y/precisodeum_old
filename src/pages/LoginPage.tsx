@@ -37,6 +37,8 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [googleState, setGoogleState] = useState<GoogleState>('idle');
   const [googleError, setGoogleError] = useState<string | null>(null);
+  useEffect(() => { console.warn('[probe] LoginPage MOUNT', Math.random()); return () => console.warn('[probe] LoginPage UNMOUNT'); }, []);
+  useEffect(() => { console.warn('[probe] email state ->', JSON.stringify(email)); }, [email]);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, loading: authLoading } = useAuth();
@@ -407,11 +409,11 @@ const LoginPage = () => {
             </div>
 
             {showForgot ? (
-              <form onSubmit={handleForgotPassword} className="space-y-4">
+              <form method="post" onSubmit={handleForgotPassword} className="space-y-4">
                 <p className="text-sm text-muted-foreground">Digite seu e-mail para receber o link de recuperação de senha.</p>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
-                  <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+                  <label htmlFor="forgot-email" className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
+                  <input id="forgot-email" name="email" type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground" />
                 </div>
                 <Button type="submit" variant="accent" className="w-full" disabled={forgotLoading}>
@@ -424,10 +426,12 @@ const LoginPage = () => {
               </form>
             ) : (
               <>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form method="post" onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
+                    <label htmlFor="login-email" className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
                     <input
+                      id="login-email"
+                      name="email"
                       type="email"
                       required
                       ref={emailRef}
@@ -444,8 +448,10 @@ const LoginPage = () => {
                     )}
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">Senha</label>
+                    <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-foreground">Senha</label>
                     <PasswordInput
+                      id="login-password"
+                      name="password"
                       required
                       minLength={6}
                       ref={passwordRef}
