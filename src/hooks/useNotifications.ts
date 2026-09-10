@@ -23,6 +23,8 @@ export interface Notification {
   read: boolean;
   link: string | null;
   created_at: string;
+  /** Extras do aviso — em leads traz `wa_link` (link pronto de WhatsApp). */
+  metadata?: Record<string, unknown> | null;
 }
 
 export function useNotifications(options?: { limit?: number | null }) {

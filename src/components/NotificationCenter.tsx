@@ -81,6 +81,17 @@ const NotificationItem = ({
           Ver vídeo
         </a>
       )}
+      {typeof notification.metadata?.wa_link === 'string' && (
+        <a
+          href={notification.metadata.wa_link as string}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <MessageCircle className="h-3 w-3" aria-hidden />
+          Responder no WhatsApp
+        </a>
+      )}
       <p className="mt-1 text-[10px] text-muted-foreground/70">
         {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
       </p>

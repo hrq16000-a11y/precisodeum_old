@@ -53,6 +53,12 @@ test.describe('Signup → logout → login (multi-viewport)', () => {
 
       // ---- Signup
       await page.goto('/cadastro', { waitUntil: 'domcontentloaded' });
+      // Espera o formulário ficar interativo: antes disso o clique vira navegação nativa.
+      await page
+        .waitForFunction(() => !!document.querySelector('form[data-form-ready="1"]'), null, {
+          timeout: 45_000,
+        })
+        .catch(() => page.waitForTimeout(5000));
       await page.getByLabel(/e-?mail/i).first().fill(email);
       await page.getByLabel(/^senha$/i).first().fill(password);
       await page.getByRole('button', { name: /^continuar$/i }).click();
@@ -68,8 +74,13 @@ test.describe('Signup → logout → login (multi-viewport)', () => {
       // ---- Logout
       await signOutFromApp(page);
 
-      // ---- Volta para /entrar e loga com a mesma senha
-      await page.goto('/entrar', { waitUntil: 'domcontentloaded' });
+      // ---- Volta para /login e loga com a mesma senha
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await page
+        .waitForFunction(() => !!document.querySelector('form[data-form-ready="1"]'), null, {
+          timeout: 45_000,
+        })
+        .catch(() => page.waitForTimeout(5000));
       await page.getByLabel(/e-?mail/i).first().fill(email);
       await page.getByLabel(/^senha$/i).first().fill(password);
       await page.getByRole('button', { name: /^(entrar|continuar)$/i }).click();

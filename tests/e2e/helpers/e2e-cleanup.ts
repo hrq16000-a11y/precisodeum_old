@@ -1,7 +1,7 @@
 /**
  * Helpers compartilhados para testes E2E do fluxo de signup.
  *
- * - `uniqueE2eEmail()` gera e-mail no padrão `e2e+<ts>-<rand>@precisodeum.test`
+ * - `uniqueE2eEmail()` gera e-mail no padrão `e2e+<ts>-<rand>@e2e.precisodeum.com`
  *   que o edge function `cleanup-e2e-test-users` reconhece por regex.
  * - `strongPassword()` retorna senha compatível com o HIBP-gated do projeto.
  * - `registerE2eEmail()`/`cleanupRegisteredEmails()` acumulam e-mails criados
@@ -17,7 +17,7 @@ const CREATED: Set<string> = new Set();
 export function uniqueE2eEmail(): string {
   const ts = Date.now().toString(36);
   const rand = Math.random().toString(36).slice(2, 8);
-  return `e2e+${ts}-${rand}@precisodeum.test`;
+  return `e2e+${ts}-${rand}@e2e.precisodeum.com`;
 }
 
 export function strongPassword(): string {

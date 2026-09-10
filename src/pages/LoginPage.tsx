@@ -43,6 +43,18 @@ const LoginPage = () => {
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
 
+  // O formulário é renderizado no servidor, mas a página só vira interativa
+  // quando o chunk carrega. Quem digita antes disso teria o texto apagado no
+  // primeiro render — aqui adotamos o que já estiver escrito nos campos.
+  useEffect(() => {
+    const domEmail = emailRef.current?.value ?? '';
+    const domPassword = passwordRef.current?.value ?? '';
+    if (domEmail) setEmail((cur) => (cur ? cur : domEmail));
+    if (domPassword) setPassword((cur) => (cur ? cur : domPassword));
+    const form = emailRef.current?.form;
+    if (form) form.dataset['formReady'] = '1';
+  }, []);
+
   // Mantemos a rota salva apenas para jornadas futuras; o pós-auth cai sempre no V3 (/cadastro-bet).
   const from = (location.state as any)?.from || null;
 
@@ -407,11 +419,11 @@ const LoginPage = () => {
             </div>
 
             {showForgot ? (
-              <form onSubmit={handleForgotPassword} className="space-y-4">
+              <form method="post" onSubmit={handleForgotPassword} className="space-y-4">
                 <p className="text-sm text-muted-foreground">Digite seu e-mail para receber o link de recuperação de senha.</p>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
-                  <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+                  <label htmlFor="forgot-email" className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
+                  <input id="forgot-email" name="email" type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground" />
                 </div>
                 <Button type="submit" variant="accent" className="w-full" disabled={forgotLoading}>
@@ -424,10 +436,12 @@ const LoginPage = () => {
               </form>
             ) : (
               <>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form method="post" onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
+                    <label htmlFor="login-email" className="mb-1 block text-sm font-medium text-foreground">E-mail</label>
                     <input
+                      id="login-email"
+                      name="email"
                       type="email"
                       required
                       ref={emailRef}
@@ -444,8 +458,10 @@ const LoginPage = () => {
                     )}
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">Senha</label>
+                    <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-foreground">Senha</label>
                     <PasswordInput
+                      id="login-password"
+                      name="password"
                       required
                       minLength={6}
                       ref={passwordRef}

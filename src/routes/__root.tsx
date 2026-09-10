@@ -299,6 +299,8 @@ const OnboardingGate = ({ children }: { children: ReactNode }) => {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setHydrated(true);
+    // Marcador consumido pelos testes E2E para só interagir depois da hidratação.
+    document.documentElement.dataset['hydrated'] = '1';
   }, []);
 
   // Self-heal idempotente para perfis legados — read-only gate, efeito desacoplado.
