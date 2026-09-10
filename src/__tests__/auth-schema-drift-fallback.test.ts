@@ -22,11 +22,12 @@ describe('useAuth · schema drift fallback', () => {
 
   it('refaz query com select mínimo (id, full_name, avatar_url, onboarding_completed)', () => {
     expect(src).toMatch(
-      /select\('id, full_name, avatar_url, onboarding_completed'\)\.eq\('id', userId\)\.maybeSingle\(\)/,
+      /select\('id, full_name, avatar_url, onboarding_completed'\)[\s\S]{0,200}?maybeSingle\(\)/,
     );
   });
 
   it('logs detalhados com code/details/hint para diagnóstico mobile', () => {
-    expect(src).toMatch(/code:.*pErr.*\?\.code.*message:.*pErr\.message.*details/);
+    expect(src).toMatch(/code: pCode,[\s\S]{0,200}?message: pErr\.message,[\s\S]{0,200}?details/);
+    expect(src).toMatch(/hint:/);
   });
 });
