@@ -1590,7 +1590,9 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
                   whatsapp: p.whatsapp || null,
                   service_area: serviceArea || null,
                   address: cityForAddress || null,
-                  working_hours: workingHoursSummary || null,
+                  // `working_hours` é NOT NULL no banco: NULL explícito ignora o
+                  // default e quebra o cadastro com 23502.
+                  working_hours: workingHoursSummary || 'A combinar',
                   working_hours_struct: s.working_hours_struct ?? null,
                   // `services` não tem `category_ids` (PGRST204); categorias
                   // extras vão para `service_categories` mais abaixo.

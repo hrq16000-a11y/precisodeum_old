@@ -17,6 +17,7 @@ import { useJsonLd } from '@/hooks/useJsonLd';
 import { motion } from 'framer-motion';
 import { importWithRetry } from '@/lib/lazyWithRetry';
 import { getSeoAuthorityData } from '@/lib/seoAuthority';
+import { PROVIDER_SAFE_COLUMNS } from '@/lib/dbSafeColumns';
 
 const SponsorLeaderBanner = lazy(() => importWithRetry(() => import('@/components/sponsors/SponsorLeaderBanner')));
 const SponsorFooterCTA = lazy(() => importWithRetry(() => import('@/components/sponsors/SponsorFooterCTA')));
@@ -92,15 +93,16 @@ const CityDetailPage = () => {
       }
 
       // Fetch providers
-      const { data: provs } = await supabase
+      const { data: provsRaw } = await supabase
         .from('providers')
-        .select('*, categories(name, slug, icon)')
+        .select(`${PROVIDER_SAFE_COLUMNS}, categories(name, slug, icon)` as const)
         .eq('status', 'approved')
         .is('deleted_at', null)
         .ilike('city', city.name)
         .order('featured', { ascending: false })
         .order('rating_avg', { ascending: false })
         .limit(100);
+      const provs = (provsRaw ?? []) as any[];
 
       // Get profile names
       const userIds = [...new Set((provs || []).map(p => p.user_id))];
