@@ -219,7 +219,7 @@ const UserDetailSheet = ({ user, isAdmin, onClose, onRefresh }: UserDetailSheetP
     fetchTags(user.id);
 
     // Provider + related
-    supabase.from('providers').select('*, categories(name, icon)').eq('user_id', user.id).maybeSingle().then(({ data: prov }) => {
+    supabase.from('providers').select(`${PROVIDER_SAFE_COLUMNS}, categories(name, icon)`).eq('user_id', user.id).maybeSingle().then(({ data: prov }: { data: any }) => {
       setProvider(prov);
       if (prov) {
         setProviderForm({
