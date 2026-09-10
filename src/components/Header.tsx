@@ -50,7 +50,7 @@ const GeoBadge = forwardRef<HTMLSpanElement, GeoBadgeProps>(({ city, temp, compa
   return (
     <span
       ref={ref}
-      className={`inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-all duration-500 ease-out ${className}`}
+      className={cn('inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-all duration-500 ease-out', className)}
     >
       <MapPin className="h-3 w-3 text-accent" />
       {city}
