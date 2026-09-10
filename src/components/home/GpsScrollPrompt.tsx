@@ -63,7 +63,15 @@ const GpsScrollPrompt = () => {
   const handleDismiss = () => {
     setDismissed(true);
     setVisible(false);
-    try { sessionStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
+    try {
+      const visits = Number(sessionStorage.getItem(VISITS_KEY) || '1');
+      const raw = sessionStorage.getItem(DISMISS_KEY);
+      const prev = raw && raw !== '1' ? JSON.parse(raw) : { count: raw === '1' ? 1 : 0 };
+      sessionStorage.setItem(
+        DISMISS_KEY,
+        JSON.stringify({ count: (Number(prev?.count) || 0) + 1, atVisit: visits }),
+      );
+    } catch { /* ignore */ }
   };
 
   const handleAllow = async () => {
