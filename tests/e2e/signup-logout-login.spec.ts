@@ -76,6 +76,11 @@ test.describe('Signup → logout → login (multi-viewport)', () => {
 
       // ---- Volta para /entrar e loga com a mesma senha
       await page.goto('/entrar', { waitUntil: 'domcontentloaded' });
+      await page
+        .waitForFunction(() => !!document.querySelector('form[data-form-ready="1"]'), null, {
+          timeout: 45_000,
+        })
+        .catch(() => page.waitForTimeout(5000));
       await page.getByLabel(/e-?mail/i).first().fill(email);
       await page.getByLabel(/^senha$/i).first().fill(password);
       await page.getByRole('button', { name: /^(entrar|continuar)$/i }).click();
