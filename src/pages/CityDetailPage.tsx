@@ -93,9 +93,9 @@ const CityDetailPage = () => {
       }
 
       // Fetch providers
-      const { data: provs } = await supabase
+      const { data: provsRaw } = await supabase
         .from('providers')
-        .select(`${PROVIDER_SAFE_COLUMNS}, categories(name, slug, icon)`)
+        .select(`${PROVIDER_SAFE_COLUMNS}, categories(name, slug, icon)` as const)
         .eq('status', 'approved')
         .is('deleted_at', null)
         .ilike('city', city.name)
