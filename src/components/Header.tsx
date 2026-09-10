@@ -22,6 +22,7 @@ const NotificationBell = (props: any) => (
 );
 import { useMenuItemsByLocations } from '@/hooks/useMenuItems';
 import Logo from '@/components/Logo';
+import { cn } from '@/lib/utils';
 
 /* ── Geo badge (full & compact) ───────────────────────────── */
 type GeoBadgeProps = { city: string | null; temp: number | null; compact?: boolean; className?: string };
