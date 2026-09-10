@@ -76,12 +76,14 @@ import { Route as AdminDashboardLayoutRouteImport } from './routes/admin/dashboa
 import { Route as AdminDbPerformanceRouteImport } from './routes/admin/db-performance'
 import { Route as AdminDebugLocalizacaoRouteImport } from './routes/admin/debug-localizacao'
 import { Route as AdminDepoimentosRouteImport } from './routes/admin/depoimentos'
+import { Route as AdminDesempenhoProfissionaisRouteImport } from './routes/admin/desempenho-profissionais'
 import { Route as AdminDestaquesRouteImport } from './routes/admin/destaques'
 import { Route as AdminEmailTemplatesRouteImport } from './routes/admin/email-templates'
 import { Route as AdminErrosRouteImport } from './routes/admin/erros'
 import { Route as AdminErros500RouteImport } from './routes/admin/erros-500'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
 import { Route as AdminFaqRouteImport } from './routes/admin/faq'
+import { Route as AdminFunilCadastroRouteImport } from './routes/admin/funil-cadastro'
 import { Route as AdminFunilHealthRouteImport } from './routes/admin/funil-health'
 import { Route as AdminFunilPublicoRouteImport } from './routes/admin/funil-publico'
 import { Route as AdminGamificacaoRouteImport } from './routes/admin/gamificacao'
@@ -572,6 +574,12 @@ const AdminDepoimentosRoute = AdminDepoimentosRouteImport.update({
   path: '/admin/depoimentos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDesempenhoProfissionaisRoute =
+  AdminDesempenhoProfissionaisRouteImport.update({
+    id: '/admin/desempenho-profissionais',
+    path: '/admin/desempenho-profissionais',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminDestaquesRoute = AdminDestaquesRouteImport.update({
   id: '/admin/destaques',
   path: '/admin/destaques',
@@ -600,6 +608,11 @@ const AdminEstatisticasRoute = AdminEstatisticasRouteImport.update({
 const AdminFaqRoute = AdminFaqRouteImport.update({
   id: '/admin/faq',
   path: '/admin/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFunilCadastroRoute = AdminFunilCadastroRouteImport.update({
+  id: '/admin/funil-cadastro',
+  path: '/admin/funil-cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFunilHealthRoute = AdminFunilHealthRouteImport.update({
@@ -1454,12 +1467,14 @@ export interface FileRoutesByFullPath {
   '/admin/db-performance': typeof AdminDbPerformanceRoute
   '/admin/debug-localizacao': typeof AdminDebugLocalizacaoRoute
   '/admin/depoimentos': typeof AdminDepoimentosRoute
+  '/admin/desempenho-profissionais': typeof AdminDesempenhoProfissionaisRoute
   '/admin/destaques': typeof AdminDestaquesRoute
   '/admin/email-templates': typeof AdminEmailTemplatesRoute
   '/admin/erros': typeof AdminErrosRoute
   '/admin/erros-500': typeof AdminErros500Route
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/faq': typeof AdminFaqRoute
+  '/admin/funil-cadastro': typeof AdminFunilCadastroRoute
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
   '/admin/gamificacao': typeof AdminGamificacaoRoute
@@ -1682,12 +1697,14 @@ export interface FileRoutesByTo {
   '/admin/db-performance': typeof AdminDbPerformanceRoute
   '/admin/debug-localizacao': typeof AdminDebugLocalizacaoRoute
   '/admin/depoimentos': typeof AdminDepoimentosRoute
+  '/admin/desempenho-profissionais': typeof AdminDesempenhoProfissionaisRoute
   '/admin/destaques': typeof AdminDestaquesRoute
   '/admin/email-templates': typeof AdminEmailTemplatesRoute
   '/admin/erros': typeof AdminErrosRoute
   '/admin/erros-500': typeof AdminErros500Route
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/faq': typeof AdminFaqRoute
+  '/admin/funil-cadastro': typeof AdminFunilCadastroRoute
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
   '/admin/gamificacao': typeof AdminGamificacaoRoute
@@ -1910,12 +1927,14 @@ export interface FileRoutesById {
   '/admin/db-performance': typeof AdminDbPerformanceRoute
   '/admin/debug-localizacao': typeof AdminDebugLocalizacaoRoute
   '/admin/depoimentos': typeof AdminDepoimentosRoute
+  '/admin/desempenho-profissionais': typeof AdminDesempenhoProfissionaisRoute
   '/admin/destaques': typeof AdminDestaquesRoute
   '/admin/email-templates': typeof AdminEmailTemplatesRoute
   '/admin/erros': typeof AdminErrosRoute
   '/admin/erros-500': typeof AdminErros500Route
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/faq': typeof AdminFaqRoute
+  '/admin/funil-cadastro': typeof AdminFunilCadastroRoute
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
   '/admin/gamificacao': typeof AdminGamificacaoRoute
@@ -2140,12 +2159,14 @@ export interface FileRouteTypes {
     | '/admin/db-performance'
     | '/admin/debug-localizacao'
     | '/admin/depoimentos'
+    | '/admin/desempenho-profissionais'
     | '/admin/destaques'
     | '/admin/email-templates'
     | '/admin/erros'
     | '/admin/erros-500'
     | '/admin/estatisticas'
     | '/admin/faq'
+    | '/admin/funil-cadastro'
     | '/admin/funil-health'
     | '/admin/funil-publico'
     | '/admin/gamificacao'
@@ -2368,12 +2389,14 @@ export interface FileRouteTypes {
     | '/admin/db-performance'
     | '/admin/debug-localizacao'
     | '/admin/depoimentos'
+    | '/admin/desempenho-profissionais'
     | '/admin/destaques'
     | '/admin/email-templates'
     | '/admin/erros'
     | '/admin/erros-500'
     | '/admin/estatisticas'
     | '/admin/faq'
+    | '/admin/funil-cadastro'
     | '/admin/funil-health'
     | '/admin/funil-publico'
     | '/admin/gamificacao'
@@ -2595,12 +2618,14 @@ export interface FileRouteTypes {
     | '/admin/db-performance'
     | '/admin/debug-localizacao'
     | '/admin/depoimentos'
+    | '/admin/desempenho-profissionais'
     | '/admin/destaques'
     | '/admin/email-templates'
     | '/admin/erros'
     | '/admin/erros-500'
     | '/admin/estatisticas'
     | '/admin/faq'
+    | '/admin/funil-cadastro'
     | '/admin/funil-health'
     | '/admin/funil-publico'
     | '/admin/gamificacao'
@@ -2824,12 +2849,14 @@ export interface RootRouteChildren {
   AdminDbPerformanceRoute: typeof AdminDbPerformanceRoute
   AdminDebugLocalizacaoRoute: typeof AdminDebugLocalizacaoRoute
   AdminDepoimentosRoute: typeof AdminDepoimentosRoute
+  AdminDesempenhoProfissionaisRoute: typeof AdminDesempenhoProfissionaisRoute
   AdminDestaquesRoute: typeof AdminDestaquesRoute
   AdminEmailTemplatesRoute: typeof AdminEmailTemplatesRoute
   AdminErrosRoute: typeof AdminErrosRoute
   AdminErros500Route: typeof AdminErros500Route
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
   AdminFaqRoute: typeof AdminFaqRoute
+  AdminFunilCadastroRoute: typeof AdminFunilCadastroRoute
   AdminFunilHealthRoute: typeof AdminFunilHealthRoute
   AdminFunilPublicoRoute: typeof AdminFunilPublicoRoute
   AdminGamificacaoRoute: typeof AdminGamificacaoRoute
@@ -3456,6 +3483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDepoimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/desempenho-profissionais': {
+      id: '/admin/desempenho-profissionais'
+      path: '/admin/desempenho-profissionais'
+      fullPath: '/admin/desempenho-profissionais'
+      preLoaderRoute: typeof AdminDesempenhoProfissionaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/destaques': {
       id: '/admin/destaques'
       path: '/admin/destaques'
@@ -3496,6 +3530,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/faq'
       fullPath: '/admin/faq'
       preLoaderRoute: typeof AdminFaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/funil-cadastro': {
+      id: '/admin/funil-cadastro'
+      path: '/admin/funil-cadastro'
+      fullPath: '/admin/funil-cadastro'
+      preLoaderRoute: typeof AdminFunilCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/funil-health': {
@@ -4652,12 +4693,14 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDbPerformanceRoute: AdminDbPerformanceRoute,
   AdminDebugLocalizacaoRoute: AdminDebugLocalizacaoRoute,
   AdminDepoimentosRoute: AdminDepoimentosRoute,
+  AdminDesempenhoProfissionaisRoute: AdminDesempenhoProfissionaisRoute,
   AdminDestaquesRoute: AdminDestaquesRoute,
   AdminEmailTemplatesRoute: AdminEmailTemplatesRoute,
   AdminErrosRoute: AdminErrosRoute,
   AdminErros500Route: AdminErros500Route,
   AdminEstatisticasRoute: AdminEstatisticasRoute,
   AdminFaqRoute: AdminFaqRoute,
+  AdminFunilCadastroRoute: AdminFunilCadastroRoute,
   AdminFunilHealthRoute: AdminFunilHealthRoute,
   AdminFunilPublicoRoute: AdminFunilPublicoRoute,
   AdminGamificacaoRoute: AdminGamificacaoRoute,
