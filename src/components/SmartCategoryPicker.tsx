@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { X, ChevronDown, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import CategoryIcon from '@/components/CategoryIcon';
 import { cn } from '@/lib/utils';
 
@@ -148,9 +149,14 @@ const SmartCategoryPicker = ({
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       {/* trigger / chips */}
-      <div
-        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm cursor-pointer min-h-[42px] flex flex-wrap items-center gap-1"
+      <Button
+        type="button"
+        variant="outline"
+        className="h-auto w-full min-h-11 justify-start whitespace-normal px-3 py-2 text-sm font-normal"
         onClick={handleOpen}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={selectedCats.length > 0 ? `Categoria selecionada: ${selectedCats.map((cat) => cat.name).join(', ')}` : placeholder}
       >
         {selectedCats.length === 0 && !open && (
           <span className="text-muted-foreground text-xs flex items-center gap-1">
@@ -177,7 +183,7 @@ const SmartCategoryPicker = ({
           </span>
         ))}
         <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
-      </div>
+      </Button>
 
       {/* dropdown */}
       {open && (
@@ -202,7 +208,7 @@ const SmartCategoryPicker = ({
           </div>
 
           {/* results */}
-          <div className="max-h-56 overflow-y-auto overscroll-contain">
+          <div className="max-h-56 overflow-y-auto overscroll-contain" role="listbox" aria-label="Categorias de serviço">
             {hasResults ? (
               filteredTree.map(({ macro, subs }) => (
                 <div key={macro.id}>
@@ -213,6 +219,8 @@ const SmartCategoryPicker = ({
                   ) : (
                     <button
                       type="button"
+                      role="option"
+                      aria-selected={selectedIds.includes(macro.id)}
                       onClick={() => handleToggle(macro.id)}
                       className={cn(
                         'flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent/10 transition-colors',
@@ -235,6 +243,8 @@ const SmartCategoryPicker = ({
                     <button
                       key={sub.id}
                       type="button"
+                      role="option"
+                      aria-selected={selectedIds.includes(sub.id)}
                       onClick={() => handleToggle(sub.id)}
                       className={cn(
                         'flex w-full items-center gap-2 pl-6 pr-3 py-1.5 text-sm hover:bg-accent/10 transition-colors',

@@ -34,6 +34,7 @@ import { CheckCircle2, AlertTriangle, Sparkles, Award } from 'lucide-react';
 import AdQualityScore from '@/components/dashboard/AdQualityScore';
 import AdLivePreview from '@/components/dashboard/AdLivePreview';
 import GoldChecklist from '@/components/dashboard/GoldChecklist';
+import ServiceFillAssistant from '@/components/dashboard/ServiceFillAssistant';
 import WizardLegalDisclaimer from '@/components/dashboard/WizardLegalDisclaimer';
 import MetroExpandSuggestion from '@/components/dashboard/MetroExpandSuggestion';
 import GeoPermissionStep from '@/components/dashboard/GeoPermissionStep';
@@ -46,13 +47,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { findMetroByPole, getMetroMembers } from '@/lib/metroRegions';
 import { validateWhatsapp } from '@/lib/whatsapp';
 import { UserCheck } from 'lucide-react';
-import type { QualityBlockState } from '@/components/dashboard/QualityBlockModal';
 
 // Heavy editor sub-components — only loaded when the edit Sheet opens (lazy chunks)
 const SmartCategoryPicker = lazy(() => import('@/components/SmartCategoryPicker'));
 const ServiceImageUpload = lazy(() => import('@/components/dashboard/ServiceImageDragUploader'));
 const DescriptionTemplatePanel = lazy(() => import('@/components/dashboard/DescriptionTemplatePanel'));
-const QualityBlockModal = lazy(() => import('@/components/dashboard/QualityBlockModal'));
 const SuspenseFallback = lazy(() => import('@/components/dashboard/SuspenseFallback'));
 
 import { format } from 'date-fns';
@@ -128,10 +127,6 @@ const DashboardServicesPage = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // Kill-switch modal (score < 50% OR > 3 leilão hits)
-  const [blockModal, setBlockModal] = useState<{ open: boolean; score: number; hits: number; reasons: string[] }>({
-    open: false, score: 0, hits: 0, reasons: [],
-  });
   // Final consent (Step 4) — checkbox de responsabilidade direta
   const [finalConsent, setFinalConsent] = useState(false);
   // Bônus visual quando o prestador expande para a RM
@@ -183,12 +178,12 @@ const DashboardServicesPage = () => {
     });
   }, []);
 
-  const fetchServices = async () => {
-    if (!provider) return;
+  const fetchServices = async (providerId = provider?.id) => {
+    if (!providerId) return;
     const { data } = await supabase
       .from('services')
       .select('*')
-      .eq('provider_id', provider.id)
+      .eq('provider_id', providerId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -332,6 +327,11 @@ const DashboardServicesPage = () => {
         : `Limite de serviços atingido (${limits?.max_services}).`);
       return;
     }
+    if (!citiesReady) {
+      toast.info('Carregando a lista de cidades. Aguarde um instante.');
+      await ensureAllCitiesBuilt();
+      setCitiesReady(true);
+    }
     const errors: Record<string, string> = {};
     if (!form.service_name.trim()) errors.service_name = 'Título é obrigatório';
     if (selectedCategoryIds.length === 0) {
@@ -355,11 +355,22 @@ const DashboardServicesPage = () => {
         duration: 5000,
       });
     }
-    if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstField = Object.keys(errors)[0];
+      if (firstField === 'service_area') setFormStep(2);
+      else setFormStep(1);
+      requestAnimationFrame(() => {
+        const target = document.querySelector<HTMLElement>(`[data-service-field="${firstField}"]`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target?.focus();
+      });
+      toast.error(errors[firstField] || 'Revise o campo destacado.');
+      return;
+    }
 
-    // ── KILL-SWITCH (HARD STOP) ─────────────────────────────────────────────
-    // Bloqueia fisicamente o save quando o anúncio não atinge o padrão mínimo.
-    // Regras: score < 50% OU mais de 3 termos de leilão.
+    // A pontuação orienta melhorias, mas nunca impede um cadastro legítimo.
+    // Só bloqueamos excesso de termos incompatíveis com a política anti-leilão.
     const selectedSlugsForGate = selectedCategoryIds
       .map((id) => categories.find((c: any) => c.id === id)?.slug)
       .filter(Boolean) as string[];
@@ -370,12 +381,7 @@ const DashboardServicesPage = () => {
       cityValidated: cityValidatedForGate,
       categorySlugs: selectedSlugsForGate,
     });
-    const blockReasons: string[] = [];
-    if (gateScore.score < 50) blockReasons.push(`Score atual ${gateScore.score}% (mínimo 50%)`);
-    if (forbiddenHits.length > LEILAO_BLOCK_THRESHOLD) {
-      blockReasons.push(`${forbiddenHits.length} termos de leilão (limite ${LEILAO_BLOCK_THRESHOLD})`);
-    }
-    if (blockReasons.length > 0) {
+    if (shouldBlockByLeilao(forbiddenHits)) {
       // Auditoria fail-soft da tentativa bloqueada
       try {
         const providerId = provider?.id || null;
@@ -391,7 +397,12 @@ const DashboardServicesPage = () => {
           reason: 'blocked_by_policy',
         });
       } catch { /* fail-soft */ }
-      setBlockModal({ open: true, score: gateScore.score, hits: forbiddenHits.length, reasons: blockReasons });
+      setFormStep(1);
+      setFormErrors((current) => ({ ...current, description: 'Remova os termos destacados para continuar.' }));
+      toast.error('A descrição tem muitos termos de disputa por menor preço.', {
+        description: 'Toque em “Reescrever com qualidade” para corrigir automaticamente.',
+      });
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-service-field="description"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
       return;
     }
     // Final consent é obrigatório para publicação (apenas em criação)
@@ -437,7 +448,7 @@ const DashboardServicesPage = () => {
         whatsapp: form.whatsapp || provider?.whatsapp || '',
         service_area: finalArea,
         address: provider ? [provider.neighborhood, provider.city, provider.state].filter(Boolean).join(', ') : form.address,
-        working_hours: form.working_hours,
+        working_hours: form.working_hours.trim() || 'A combinar',
         website: form.website,
         price: form.price || null,
         instagram_url: form.instagram_url,
@@ -547,7 +558,7 @@ const DashboardServicesPage = () => {
         // Trigger "hand-holding" next-step prompt after a short delay
         setTimeout(() => setShowNextStepPrompt(true), 1200);
       }
-      await fetchServices();
+      await fetchServices(providerId);
       refetchLimits();
     } catch (err: any) {
       await showSaveError({
@@ -970,13 +981,13 @@ const DashboardServicesPage = () => {
       <Sheet open={showDialog} onOpenChange={(open) => { if (!open) { resetForm(); } setShowDialog(open); }}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-xl p-0 flex flex-col gap-0 overflow-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-accent/60 [&::-webkit-scrollbar-thumb]:rounded-full"
+          className="h-dvh w-full max-w-full sm:max-w-xl p-0 flex flex-col gap-0 overflow-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-accent/60 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
           <SheetHeader className="px-5 pt-5 pb-2 shrink-0 text-left">
             <SheetTitle className="flex items-center gap-2 text-lg">
               {wizardStep === 'photos'
-                ? <>📸 Adicione Fotos do Serviço</>
-                : <>🔧 {editId ? 'Editar Serviço' : 'Novo Serviço'}</>}
+                ? <>Adicione fotos do serviço</>
+                : <>{editId ? 'Editar serviço' : 'Novo serviço'}</>}
             </SheetTitle>
             {wizardStep === 'photos' && (
               <p className="text-xs text-muted-foreground mt-1">
@@ -1058,45 +1069,60 @@ const DashboardServicesPage = () => {
               );
             })()}
 
-            {/* Barra de progresso global de qualidade — sempre visível durante o wizard */}
-            <div className="rounded-lg border border-border bg-card/50 p-2">
-              <AdQualityScore
-                description={form.description}
-                hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
-                cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
-                categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
-              />
-            </div>
-
-            {/* Prévia ao vivo do anúncio — atualiza a cada digitação */}
-            <AdLivePreview
-              title={form.service_name}
-              description={form.description}
-              city={stripLegacyAreaPrefixes(form.service_area)}
-              cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
-              hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
-              categoryName={categories.find((c: any) => selectedCategoryIds.includes(c.id))?.name}
-              categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
-            />
-
             {/* ── Section 1: Informações Básicas ── */}
             {formStep === 1 && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                📝 Informações Básicas
+                Informações básicas
               </h3>
               <div className="rounded-lg border border-border bg-card p-3 space-y-3">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">Título do Serviço *</label>
                   <input
+                    id="service-name"
+                    data-service-field="service_name"
                     name="service_name"
                     value={form.service_name}
                     onChange={handleChange}
                     placeholder="Ex: Instalação de Ar Condicionado"
+                    aria-invalid={!!formErrors.service_name}
+                    aria-describedby={formErrors.service_name ? 'service-name-error' : undefined}
                     className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden ${formErrors.service_name ? 'border-destructive' : 'border-input'}`}
                   />
-                  {formErrors.service_name && <p className="text-xs text-destructive mt-1">{formErrors.service_name}</p>}
+                  {formErrors.service_name && <p id="service-name-error" className="text-xs text-destructive mt-1" role="alert">{formErrors.service_name}</p>}
                 </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    Categoria * <span className="text-xs font-normal text-muted-foreground">(escolha uma)</span>
+                  </label>
+                  <div data-service-field="category" tabIndex={-1}>
+                    <Suspense fallback={<SuspenseFallback />}>
+                      <SmartCategoryPicker
+                        categories={categories}
+                        selectedIds={selectedCategoryIds}
+                        onToggle={toggleCategory}
+                        maxSelections={1}
+                        placeholder="Qual serviço você oferece?"
+                      />
+                    </Suspense>
+                  </div>
+                  {formErrors.category && <p className="mt-1 text-xs text-destructive" role="alert">{formErrors.category}</p>}
+                </div>
+
+                {!editId && (
+                  <ServiceFillAssistant
+                    categorySlug={categories.find((c: any) => selectedCategoryIds.includes(c.id))?.slug}
+                    categoryName={categories.find((c: any) => selectedCategoryIds.includes(c.id))?.name}
+                    cityName={form.service_area}
+                    serviceName={form.service_name}
+                    onApply={(title, description) => {
+                      setForm((current) => ({ ...current, service_name: title, description }));
+                      setFormErrors((current) => ({ ...current, service_name: '', description: '' }));
+                      toast.success('Texto preenchido. Você pode revisar antes de avançar.');
+                    }}
+                  />
+                )}
 
                 {/* Auto-fill: importa Bio + Foto do perfil para acelerar o cadastro */}
                 {!editId && (provider?.description || provider?.photo_url) && (
@@ -1145,7 +1171,7 @@ const DashboardServicesPage = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-foreground">Descrição</label>
+                    <label htmlFor="service-description" className="block text-sm font-medium text-foreground">Descrição <span className="text-xs font-normal text-muted-foreground">(opcional)</span></label>
                   </div>
                   <DescriptionTemplatePanel
                     categorySlugs={selectedCategoryIds.map(id => {
@@ -1158,6 +1184,8 @@ const DashboardServicesPage = () => {
                     onApply={(desc) => setForm(prev => ({ ...prev, description: prev.description ? `${prev.description}\n\n${desc}` : desc }))}
                   />
                   <textarea
+                    id="service-description"
+                    data-service-field="description"
                     name="description"
                     rows={3}
                     value={form.description}
@@ -1213,7 +1241,7 @@ const DashboardServicesPage = () => {
                   {formErrors.description && <p className="text-xs text-destructive mt-1">{formErrors.description}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-foreground">Preço (a partir de R$)</label>
                     <input
@@ -1225,42 +1253,28 @@ const DashboardServicesPage = () => {
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden"
                     />
                   </div>
-                   <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">
-                      Categoria <span className="text-xs font-normal text-muted-foreground">(1 por serviço)</span>
-                    </label>
-                    <Suspense fallback={<SuspenseFallback />}>
-                      <SmartCategoryPicker
-                        categories={categories}
-                        selectedIds={selectedCategoryIds}
-                        onToggle={toggleCategory}
-                        maxSelections={1}
-                        placeholder="Escolha a categoria deste serviço..."
-                      />
-                    </Suspense>
-                    {formErrors.category && (
-                      <p className="mt-1 text-xs text-destructive" role="alert">{formErrors.category}</p>
-                    )}
-                    <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
-                      Cada serviço tem <span className="font-medium text-foreground">1 categoria</span>. Para oferecer outra atividade, cadastre um novo serviço.
-                      Precisa de mais de 5 serviços?{' '}
-                      <a
-                        href="/dashboard/suporte"
-                        className="font-medium text-bet-amber-fg underline underline-offset-2"
-                        onClick={() => {
-                          saveSupportContext({
-                            source: 'services_form_category_helper',
-                            services_count: services.length,
-                            attempted_categories: selectedCategoryIds.length,
-                            cap: Math.min(5, limits?.max_services ?? 5),
-                          });
-                        }}
-                      >
-                        Fale com o suporte
-                      </a>{' '}para liberar.
-                    </p>
-                  </div>
                 </div>
+
+                <details className="rounded-lg border border-border bg-muted/20 p-3">
+                  <summary className="cursor-pointer text-xs font-semibold text-foreground">Ver qualidade e prévia do anúncio</summary>
+                  <div className="mt-3 space-y-3">
+                    <AdQualityScore
+                      description={form.description}
+                      hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                      cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
+                      categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
+                    />
+                    <AdLivePreview
+                      title={form.service_name}
+                      description={form.description}
+                      city={stripLegacyAreaPrefixes(form.service_area)}
+                      cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
+                      hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                      categoryName={categories.find((c: any) => selectedCategoryIds.includes(c.id))?.name}
+                      categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
+                    />
+                  </div>
+                </details>
               </div>
             </div>
             )}
@@ -1298,6 +1312,7 @@ const DashboardServicesPage = () => {
                   <div className="relative">
                     <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
+                      data-service-field="service_area"
                       value={citySearch}
                       onChange={(e) => {
                         setCitySearch(e.target.value);
@@ -1313,6 +1328,8 @@ const DashboardServicesPage = () => {
                       }}
                       onFocus={() => { if (citySearch.length >= 2) setShowCityDropdown(true); }}
                       placeholder="Digite o nome da cidade..."
+                      aria-invalid={!!formErrors.service_area}
+                      aria-describedby={formErrors.service_area ? 'service-area-error' : undefined}
                       className={`w-full rounded-lg border bg-background pl-9 pr-8 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden ${formErrors.service_area ? 'border-destructive' : 'border-input'}`}
                     />
                     {form.service_area && (
@@ -1344,7 +1361,7 @@ const DashboardServicesPage = () => {
                   {geoDetected && form.service_area && (
                     <p className="text-[11px] text-accent mt-0.5 flex items-center gap-1"><MapPin className="h-3 w-3" />Localização confirmada</p>
                   )}
-                  {formErrors.service_area && <p className="text-xs text-destructive mt-1">{formErrors.service_area}</p>}
+                  {formErrors.service_area && <p id="service-area-error" className="text-xs text-destructive mt-1" role="alert">{formErrors.service_area}</p>}
                   {showCityDropdown && filteredCities.length > 0 && (
                     <div className="absolute z-50 top-full mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-48 overflow-y-auto">
                       {filteredCities.map((c, i) => (
@@ -1703,6 +1720,13 @@ const DashboardServicesPage = () => {
                     if (formStep === 1 && !form.service_name.trim()) {
                       setFormErrors({ service_name: 'Título é obrigatório' });
                       toast.error('Informe o título do serviço');
+                      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-service-field="service_name"]')?.focus());
+                      return;
+                    }
+                    if (formStep === 1 && selectedCategoryIds.length !== 1) {
+                      setFormErrors({ category: 'Escolha uma categoria para continuar' });
+                      toast.error('Escolha a categoria do serviço');
+                      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-service-field="category"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
                       return;
                     }
                     if (formStep === 2 && !form.service_area.trim()) {
@@ -1711,10 +1735,11 @@ const DashboardServicesPage = () => {
                       return;
                     }
                     if (formStep === 3) {
-                      // Bloqueia avanço se existirem termos proibidos pendentes
+                      // Só bloqueia excesso de termos proibidos; avisos leves não impedem o cadastro.
                       const hits = lintServiceDescription(form.description);
-                      if (hits.length > 0) {
-                        toast.error('Termos de leilão detectados', {
+                      if (shouldBlockByLeilao(hits)) {
+                        setFormStep(1);
+                        toast.error('A descrição precisa de uma correção rápida', {
                           description: 'Use "Reescrever com qualidade" antes de avançar para a revisão.',
                         });
                         return;
@@ -1766,17 +1791,6 @@ const DashboardServicesPage = () => {
         providerSlug={provider?.slug ?? null}
       />
 
-      {/* Kill-Switch: modal de conscientização quando score<50% ou >3 termos de leilão */}
-      {/* Kill-Switch: lazy modal de conscientização quando score<50% ou >3 termos de leilão */}
-      {blockModal.open && (
-        <Suspense fallback={null}>
-          <QualityBlockModal
-            state={blockModal}
-            onOpenChange={(o) => setBlockModal((s) => ({ ...s, open: o }))}
-            onAcknowledge={() => setBlockModal({ open: false, score: 0, hits: 0, reasons: [] })}
-          />
-        </Suspense>
-      )}
     </DashboardLayout>
   );
 };

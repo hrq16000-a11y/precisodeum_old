@@ -54,8 +54,8 @@ Demais blocos ficam listados como tickets prontos para as próximas iterações.
 
 ## Incidente de conversão — cadastro de serviços mobile (2026-09-10)
 
-- [ ] Remover bloqueios contraditórios entre qualidade do anúncio e publicação.
-- [ ] Criar assistente de preenchimento visível e simples no celular.
-- [ ] Corrigir sobreposição da navegação inferior e largura/rolagem do formulário.
-- [ ] Tornar erros acionáveis e levar o foco ao campo que precisa de correção.
+- [x] Remover bloqueios contraditórios entre qualidade do anúncio e publicação.
+- [x] Criar assistente de preenchimento visível e simples no celular.
+- [x] Corrigir sobreposição da navegação inferior e largura/rolagem do formulário.
+- [x] Tornar erros acionáveis e levar o foco ao campo que precisa de correção.
 - [ ] Validar criação e persistência do serviço em celular e desktop.
