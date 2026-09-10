@@ -37,13 +37,23 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [googleState, setGoogleState] = useState<GoogleState>('idle');
   const [googleError, setGoogleError] = useState<string | null>(null);
-  useEffect(() => { console.warn('[probe] LoginPage MOUNT', Math.random()); return () => console.warn('[probe] LoginPage UNMOUNT'); }, []);
-  useEffect(() => { console.warn('[probe] email state ->', JSON.stringify(email)); }, [email]);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, loading: authLoading } = useAuth();
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
+
+  // O formulário é renderizado no servidor, mas a página só vira interativa
+  // quando o chunk carrega. Quem digita antes disso teria o texto apagado no
+  // primeiro render — aqui adotamos o que já estiver escrito nos campos.
+  useEffect(() => {
+    const domEmail = emailRef.current?.value ?? '';
+    const domPassword = passwordRef.current?.value ?? '';
+    if (domEmail) setEmail((cur) => (cur ? cur : domEmail));
+    if (domPassword) setPassword((cur) => (cur ? cur : domPassword));
+    const form = emailRef.current?.form;
+    if (form) form.dataset['formReady'] = '1';
+  }, []);
 
   // Mantemos a rota salva apenas para jornadas futuras; o pós-auth cai sempre no V3 (/cadastro-bet).
   const from = (location.state as any)?.from || null;
