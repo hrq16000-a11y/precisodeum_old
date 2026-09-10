@@ -1720,6 +1720,13 @@ const DashboardServicesPage = () => {
                     if (formStep === 1 && !form.service_name.trim()) {
                       setFormErrors({ service_name: 'Título é obrigatório' });
                       toast.error('Informe o título do serviço');
+                      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-service-field="service_name"]')?.focus());
+                      return;
+                    }
+                    if (formStep === 1 && selectedCategoryIds.length !== 1) {
+                      setFormErrors({ category: 'Escolha uma categoria para continuar' });
+                      toast.error('Escolha a categoria do serviço');
+                      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-service-field="category"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
                       return;
                     }
                     if (formStep === 2 && !form.service_area.trim()) {
