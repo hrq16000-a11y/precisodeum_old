@@ -102,6 +102,7 @@ const CityDetailPage = () => {
         .order('featured', { ascending: false })
         .order('rating_avg', { ascending: false })
         .limit(100);
+      const provs = (provsRaw ?? []) as any[];
 
       // Get profile names
       const userIds = [...new Set((provs || []).map(p => p.user_id))];
