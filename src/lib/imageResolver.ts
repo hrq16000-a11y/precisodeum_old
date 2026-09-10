@@ -184,4 +184,13 @@ export function handleBrandImageError(
   img.src = '/placeholder.svg';
   img.style.objectFit = 'contain';
   img.style.background = 'hsl(var(--muted))';
+  // O conteúdo mudou: o texto alternativo precisa descrever o que está na tela.
+  if (img.getAttribute('alt') !== '') {
+    const genericAlt = type === 'social' ? 'Imagem indisponível' : 'Logo indisponível';
+    img.setAttribute('alt', genericAlt);
+    if (img.hasAttribute('aria-label')) img.setAttribute('aria-label', genericAlt);
+  } else {
+    img.setAttribute('aria-hidden', 'true');
+  }
+  img.dataset.brandFallbackApplied = '1';
 }

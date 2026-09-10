@@ -41,12 +41,18 @@ interface CityRow {
   avgPosition: number | null;
 }
 
+/**
+ * Chave canônica de cidade. As páginas enviam telemetria com slug
+ * ("sao-paulo") enquanto o inventário guarda rótulo ("São Paulo"): sem
+ * normalizar hífen/espaço, toda cidade com nome composto ficava zerada.
+ */
 const norm = (s: string) =>
   s
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .trim();
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 export default function CitySeoPanel() {
   const { data: inventory = [], isLoading: loadingInv } = useProgrammaticInventory();
@@ -99,7 +105,10 @@ export default function CitySeoPanel() {
     }
 
     const slugByNorm = new Map<string, string>();
-    byCity.forEach((r) => slugByNorm.set(norm(r.cityLabel), r.citySlug));
+    byCity.forEach((r) => {
+      slugByNorm.set(norm(r.cityLabel), r.citySlug);
+      slugByNorm.set(norm(r.citySlug), r.citySlug);
+    });
 
     for (const f of funnel) {
       if (!f.city) continue;
