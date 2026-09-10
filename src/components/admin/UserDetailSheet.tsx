@@ -39,7 +39,7 @@ import {
   shouldEnforcePhone,
   PHONE_INVALID_MESSAGE,
 } from '@/lib/validation/phoneNormalization';
-import { PROFILE_FULL_COLUMNS } from '@/lib/dbSafeColumns';
+import { PROFILE_FULL_COLUMNS, PROVIDER_SAFE_COLUMNS } from '@/lib/dbSafeColumns';
 
 
 interface UserDetailSheetProps {

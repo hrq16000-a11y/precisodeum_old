@@ -17,6 +17,7 @@ import { useJsonLd } from '@/hooks/useJsonLd';
 import { motion } from 'framer-motion';
 import { importWithRetry } from '@/lib/lazyWithRetry';
 import { getSeoAuthorityData } from '@/lib/seoAuthority';
+import { PROVIDER_SAFE_COLUMNS } from '@/lib/dbSafeColumns';
 
 const SponsorLeaderBanner = lazy(() => importWithRetry(() => import('@/components/sponsors/SponsorLeaderBanner')));
 const SponsorFooterCTA = lazy(() => importWithRetry(() => import('@/components/sponsors/SponsorFooterCTA')));
