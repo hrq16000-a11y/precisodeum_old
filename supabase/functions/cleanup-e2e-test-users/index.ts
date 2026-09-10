@@ -21,7 +21,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const DEFAULT_PATTERN = /^e2e\+.*@precisodeum\.test$/i;
+const DEFAULT_PATTERN = /^e2e\+.*@(e2e\.precisodeum\.com|precisodeum\.test)$/i;
 const STORAGE_BUCKETS = ['avatars', 'service-images', 'portfolio', 'sponsors'];
 
 Deno.serve(async (req) => {
