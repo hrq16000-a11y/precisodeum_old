@@ -255,7 +255,8 @@ const HandymanServicePage = ({ regional = false, serviceSlug }: Props) => {
   const canonical = `${SITE_BASE_URL}${seo.canonicalPath}`;
   // Cidade/bairro sem profissional é conteúdo raso — não indexamos.
   // Página desativada manualmente no admin também sai do índice.
-  const noindex = (!!citySlug && providers.length === 0) || isOverrideDisabled(override);
+  const pageDisabled = isOverrideDisabled(override);
+  const noindex = (!!citySlug && providers.length === 0) || pageDisabled;
 
 
   useSeoHead({ title: seo.title, description: seo.description, canonical, noindex });
