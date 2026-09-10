@@ -24,10 +24,18 @@ vi.mock('@/integrations/supabase/client', () => ({
 const toastError = vi.fn();
 const toastSuccess = vi.fn();
 vi.mock('sonner', () => ({
-  toast: {
+  toast: Object.assign(vi.fn(), {
     error: (m: string) => toastError(m),
     success: (m: string) => toastSuccess(m),
-  },
+    info: vi.fn(),
+    warning: vi.fn(),
+    message: vi.fn(),
+    loading: vi.fn(() => 'toast-id'),
+    custom: vi.fn(),
+    promise: vi.fn(),
+    dismiss: vi.fn(),
+  }),
+  Toaster: () => null,
 }));
 
 const LEAD_ID = '11111111-1111-1111-1111-111111111111';
