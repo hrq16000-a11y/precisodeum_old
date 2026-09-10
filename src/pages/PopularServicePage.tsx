@@ -13,7 +13,9 @@ import { Button } from '@/components/ui/button';
 import CategoryIcon from '@/components/CategoryIcon';
 
 const PopularServicePage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  // A rota atual usa o parâmetro `serviceSlug`; mantemos `slug` como alias legado.
+  const params = useParams<{ serviceSlug?: string; slug?: string }>();
+  const slug = params.serviceSlug ?? params.slug;
   const [aiContent, setAiContent] = useState<{ title?: string; description?: string; tips?: string[] } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 

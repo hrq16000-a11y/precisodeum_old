@@ -255,7 +255,8 @@ const HandymanServicePage = ({ regional = false, serviceSlug }: Props) => {
   const canonical = `${SITE_BASE_URL}${seo.canonicalPath}`;
   // Cidade/bairro sem profissional é conteúdo raso — não indexamos.
   // Página desativada manualmente no admin também sai do índice.
-  const noindex = (!!citySlug && providers.length === 0) || isOverrideDisabled(override);
+  const pageDisabled = isOverrideDisabled(override);
+  const noindex = (!!citySlug && providers.length === 0) || pageDisabled;
 
 
   useSeoHead({ title: seo.title, description: seo.description, canonical, noindex });
@@ -344,6 +345,30 @@ const HandymanServicePage = ({ regional = false, serviceSlug }: Props) => {
   const searchHref = citySlug
     ? `/buscar?q=${searchQuery}&cidade=${encodeURIComponent(cityLabel)}`
     : `/buscar?q=${searchQuery}`;
+
+  // Página desativada no admin: sai do ar de fato (não só noindex).
+  if (pageDisabled) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex flex-1 items-center justify-center px-4 py-20">
+          <div className="max-w-md text-center">
+            <h1 className="text-2xl font-bold text-foreground">Página indisponível</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Esta página foi desativada. Use a busca para encontrar profissionais na sua região.
+            </p>
+            <a
+              href={searchHref}
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
+              Buscar profissionais
+            </a>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

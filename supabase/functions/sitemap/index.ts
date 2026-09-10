@@ -311,18 +311,31 @@ ${entries.join('\n')}
       hoodCounts.set(hoodKey, (hoodCounts.get(hoodKey) || 0) + 1);
     }
 
+    // Páginas desativadas pelo admin saem do sitemap (não são reenviadas ao Google).
+    const { data: overrideRows } = await supabase
+      .from('programmatic_page_overrides')
+      .select('path, enabled')
+      .eq('enabled', false);
+    const disabledPaths = new Set<string>((overrideRows || []).map((r: any) => String(r.path)));
+
     for (const vertical of SERVICE_VERTICALS) {
-      urls += entry(siteUrl, `/servico/${vertical.slug}`, today, 'weekly', '0.9');
+      const p = `/servico/${vertical.slug}`;
+      if (disabledPaths.has(p)) continue;
+      urls += entry(siteUrl, p, today, 'weekly', '0.9');
     }
     for (const [key] of cityCounts) {
       const [verticalSlug, citySlug] = key.split('::');
-      urls += entry(siteUrl, `/servico/${verticalSlug}/${citySlug}`, today, 'weekly', '0.8');
+      const p = `/servico/${verticalSlug}/${citySlug}`;
+      if (disabledPaths.has(p)) continue;
+      urls += entry(siteUrl, p, today, 'weekly', '0.8');
     }
     const MIN_HOOD_PROVIDERS = 2;
     for (const [key, count] of hoodCounts) {
       if (count < MIN_HOOD_PROVIDERS) continue;
       const [verticalSlug, citySlug, hoodSlug] = key.split('::');
-      urls += entry(siteUrl, `/servico/${verticalSlug}/${citySlug}-${hoodSlug}`, today, 'monthly', '0.6');
+      const p = `/servico/${verticalSlug}/${citySlug}-${hoodSlug}`;
+      if (disabledPaths.has(p)) continue;
+      urls += entry(siteUrl, p, today, 'monthly', '0.6');
     }
   }
 

@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { useGeoCity } from '@/hooks/useGeoCity';
 
 const DISMISS_KEY = 'gps_scroll_prompt_dismissed_v1';
+const VISITS_KEY = 'gps_scroll_prompt_visits_v1';
+/** Depois de dispensar, o convite volta após este número de páginas visitadas. */
+const REARM_AFTER_VISITS = 3;
+/** Nunca insistir mais que isso na mesma sessão. */
+const MAX_DISMISSALS = 2;
 
 /**
  * Friendly GPS request banner that appears AFTER the user scrolls past the
@@ -22,11 +27,20 @@ const GpsScrollPrompt = () => {
 
   const hasGps = latitude != null && longitude != null;
 
-  // Read dismiss state once on mount
+  // Conta visitas e reativa o convite depois de algumas páginas.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      if (sessionStorage.getItem(DISMISS_KEY) === '1') setDismissed(true);
+      const visits = Number(sessionStorage.getItem(VISITS_KEY) || '0') + 1;
+      sessionStorage.setItem(VISITS_KEY, String(visits));
+
+      const raw = sessionStorage.getItem(DISMISS_KEY);
+      if (!raw) return;
+      const state = raw === '1' ? { count: 1, atVisit: visits - 1 } : JSON.parse(raw);
+      const count = Number(state?.count) || 0;
+      const atVisit = Number(state?.atVisit) || 0;
+      const rearmed = visits - atVisit >= REARM_AFTER_VISITS && count < MAX_DISMISSALS;
+      setDismissed(!rearmed);
     } catch { /* ignore */ }
   }, []);
 
@@ -49,7 +63,15 @@ const GpsScrollPrompt = () => {
   const handleDismiss = () => {
     setDismissed(true);
     setVisible(false);
-    try { sessionStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
+    try {
+      const visits = Number(sessionStorage.getItem(VISITS_KEY) || '1');
+      const raw = sessionStorage.getItem(DISMISS_KEY);
+      const prev = raw && raw !== '1' ? JSON.parse(raw) : { count: raw === '1' ? 1 : 0 };
+      sessionStorage.setItem(
+        DISMISS_KEY,
+        JSON.stringify({ count: (Number(prev?.count) || 0) + 1, atVisit: visits }),
+      );
+    } catch { /* ignore */ }
   };
 
   const handleAllow = async () => {
