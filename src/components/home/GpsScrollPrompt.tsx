@@ -27,11 +27,20 @@ const GpsScrollPrompt = () => {
 
   const hasGps = latitude != null && longitude != null;
 
-  // Read dismiss state once on mount
+  // Conta visitas e reativa o convite depois de algumas páginas.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      if (sessionStorage.getItem(DISMISS_KEY) === '1') setDismissed(true);
+      const visits = Number(sessionStorage.getItem(VISITS_KEY) || '0') + 1;
+      sessionStorage.setItem(VISITS_KEY, String(visits));
+
+      const raw = sessionStorage.getItem(DISMISS_KEY);
+      if (!raw) return;
+      const state = raw === '1' ? { count: 1, atVisit: visits - 1 } : JSON.parse(raw);
+      const count = Number(state?.count) || 0;
+      const atVisit = Number(state?.atVisit) || 0;
+      const rearmed = visits - atVisit >= REARM_AFTER_VISITS && count < MAX_DISMISSALS;
+      setDismissed(!rearmed);
     } catch { /* ignore */ }
   }, []);
 
