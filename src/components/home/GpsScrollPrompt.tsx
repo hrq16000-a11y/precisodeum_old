@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { useGeoCity } from '@/hooks/useGeoCity';
 
 const DISMISS_KEY = 'gps_scroll_prompt_dismissed_v1';
+const VISITS_KEY = 'gps_scroll_prompt_visits_v1';
+/** Depois de dispensar, o convite volta após este número de páginas visitadas. */
+const REARM_AFTER_VISITS = 3;
+/** Nunca insistir mais que isso na mesma sessão. */
+const MAX_DISMISSALS = 2;
 
 /**
  * Friendly GPS request banner that appears AFTER the user scrolls past the
