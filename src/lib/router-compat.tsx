@@ -12,7 +12,7 @@ import {
   Link as TSLink,
   Navigate as TSNavigate,
   Outlet as TSOutlet,
-  getRouterContext,
+  RouterContextProvider,
   createRootRoute,
   createRoute,
   createRouter,
@@ -211,8 +211,7 @@ export function MemoryRouter({ children, initialEntries }: { children?: ReactNod
     return r;
   }, []);
 
-  const RouterContext = getRouterContext();
-  return <RouterContext.Provider value={router as never}>{children}</RouterContext.Provider>;
+  return <RouterContextProvider router={router as never}>{children}</RouterContextProvider>;
 }
 
 
