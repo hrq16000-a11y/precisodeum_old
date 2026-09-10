@@ -12,8 +12,13 @@ import {
   Link as TSLink,
   Navigate as TSNavigate,
   Outlet as TSOutlet,
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  createMemoryHistory,
 } from "@tanstack/react-router";
-import { useMemo, useCallback, forwardRef, type ComponentProps, type ReactNode } from "react";
+import { useMemo, useCallback, useRef, forwardRef, type ComponentProps, type ReactNode } from "react";
 
 // ---------- shared URL parsing ----------
 
@@ -187,11 +192,26 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavL
 // ---------- MemoryRouter (test-compat only) ----------
 
 /**
- * Compat de compilação para testes legados que envolviam componentes em
- * <MemoryRouter>. O router real vem do RouterProvider do app; aqui apenas
- * renderizamos os filhos. Testes que dependem de navegação real precisam
- * ser religados ao setup TanStack (follow-up).
+ * Compat para testes legados: monta um router TanStack em memória cujo
+ * root route renderiza os filhos. Isso dá contexto real a <Link>/useLocation
+ * dentro de componentes testados isoladamente.
  */
-export function MemoryRouter({ children }: { children?: ReactNode; initialEntries?: string[] }) {
-  return <>{children}</>;
+export function MemoryRouter({ children, initialEntries }: { children?: ReactNode; initialEntries?: string[] }) {
+  const childrenRef = useRef<ReactNode>(children);
+  childrenRef.current = children;
+
+  const router = useMemo(() => {
+    const rootRoute = createRootRoute({ component: () => <>{childrenRef.current}</> });
+    const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => null });
+    const splatRoute = createRoute({ getParentRoute: () => rootRoute, path: "$", component: () => null });
+    rootRoute.addChildren([indexRoute, splatRoute]);
+    return createRouter({
+      routeTree: rootRoute,
+      history: createMemoryHistory({ initialEntries: initialEntries?.length ? initialEntries : ["/"] }),
+      defaultPendingMinMs: 0,
+    });
+  }, []);
+
+  return <RouterProvider router={router as never} />;
 }
+
