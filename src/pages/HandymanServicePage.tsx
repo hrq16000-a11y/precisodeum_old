@@ -346,6 +346,30 @@ const HandymanServicePage = ({ regional = false, serviceSlug }: Props) => {
     ? `/buscar?q=${searchQuery}&cidade=${encodeURIComponent(cityLabel)}`
     : `/buscar?q=${searchQuery}`;
 
+  // Página desativada no admin: sai do ar de fato (não só noindex).
+  if (pageDisabled) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex flex-1 items-center justify-center px-4 py-20">
+          <div className="max-w-md text-center">
+            <h1 className="text-2xl font-bold text-foreground">Página indisponível</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Esta página foi desativada. Use a busca para encontrar profissionais na sua região.
+            </p>
+            <a
+              href={searchHref}
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
+              Buscar profissionais
+            </a>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
