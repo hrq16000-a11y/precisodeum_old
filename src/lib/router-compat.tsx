@@ -12,13 +12,13 @@ import {
   Link as TSLink,
   Navigate as TSNavigate,
   Outlet as TSOutlet,
-  RouterProvider,
+  getRouterContext,
   createRootRoute,
   createRoute,
   createRouter,
   createMemoryHistory,
 } from "@tanstack/react-router";
-import { useMemo, useCallback, useRef, forwardRef, type ComponentProps, type ReactNode } from "react";
+import { useMemo, useCallback, forwardRef, type ComponentProps, type ReactNode } from "react";
 
 // ---------- shared URL parsing ----------
 
