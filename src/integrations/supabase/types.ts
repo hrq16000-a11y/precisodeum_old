@@ -11920,6 +11920,7 @@ export type Database = {
       user_lead_quota: { Args: { _user_id: string }; Returns: number }
       user_lead_quota_usage: { Args: { _user_id: string }; Returns: Json }
       validate_db_health: { Args: never; Returns: Json }
+      wa_encode_text: { Args: { _t: string }; Returns: string }
     }
     Enums: {
       app_role:
