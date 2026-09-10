@@ -97,6 +97,8 @@ const menuGroups = [
       { label: 'Funil de Cadastro', icon: BarChart3, path: '/admin/onboarding-funnel' },
       { label: 'Métricas de Conversão', icon: Target, path: '/admin/conversao' },
       { label: 'Conversão por Local', icon: Target, path: '/admin/conversao-geo' },
+      { label: 'Desempenho de Profissionais', icon: BarChart3, path: '/admin/desempenho-profissionais' },
+      { label: 'Funil de Cadastro (etapas)', icon: BarChart3, path: '/admin/funil-cadastro' },
       { label: 'Otimização Local', icon: Target, path: '/admin/otimizacao-local' },
 
       { label: 'Monitoramento de Erros', icon: AlertTriangle, path: '/admin/erros' },

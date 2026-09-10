@@ -42,7 +42,11 @@ export function isBottleneck(row: Pick<StepRow, 'entered' | 'drop_pct'>): boolea
 }
 
 const AdminSignupFunnelStepsPage = () => {
-  useSeoHead({ title: 'Funil de cadastro por etapa', noindex: true });
+  useSeoHead({
+    title: 'Funil de cadastro por etapa',
+    description: 'Painel interno com entradas, conclusões e abandono por etapa do cadastro.',
+    noindex: true,
+  });
   const [days, setDays] = useState<number>(14);
 
   const { data, isLoading, isFetching, refetch } = useQuery({

@@ -60,7 +60,11 @@ function Kpi({ label, value, icon: Icon }: { label: string; value: number; icon:
 }
 
 const AdminProviderPerformancePage = () => {
-  useSeoHead({ title: 'Desempenho por profissional e cidade', noindex: true });
+  useSeoHead({
+    title: 'Desempenho por profissional e cidade',
+    description: 'Painel interno de leads, visitas e cliques por profissional e cidade.',
+    noindex: true,
+  });
   const qc = useQueryClient();
   const [days, setDays] = useState<number>(30);
   const [city, setCity] = useState('');
