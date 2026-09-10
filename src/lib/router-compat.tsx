@@ -192,26 +192,27 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavL
 // ---------- MemoryRouter (test-compat only) ----------
 
 /**
- * Compat para testes legados: monta um router TanStack em memória cujo
- * root route renderiza os filhos. Isso dá contexto real a <Link>/useLocation
- * dentro de componentes testados isoladamente.
+ * Compat para testes legados: renderiza os filhos diretamente (render síncrono,
+ * como o react-router v6 fazia) e injeta um router TanStack em memória no
+ * contexto, para que <Link>/useLocation funcionem fora do RouterProvider real.
  */
 export function MemoryRouter({ children, initialEntries }: { children?: ReactNode; initialEntries?: string[] }) {
-  const childrenRef = useRef<ReactNode>(children);
-  childrenRef.current = children;
-
   const router = useMemo(() => {
-    const rootRoute = createRootRoute({ component: () => <>{childrenRef.current}</> });
+    const rootRoute = createRootRoute({ component: () => null });
     const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => null });
     const splatRoute = createRoute({ getParentRoute: () => rootRoute, path: "$", component: () => null });
     rootRoute.addChildren([indexRoute, splatRoute]);
-    return createRouter({
+    const r = createRouter({
       routeTree: rootRoute,
       history: createMemoryHistory({ initialEntries: initialEntries?.length ? initialEntries : ["/"] }),
-      defaultPendingMinMs: 0,
     });
+    // Popula router.state.matches sem montar o RouterProvider.
+    try { (r as unknown as { load: () => void }).load(); } catch { /* noop */ }
+    return r;
   }, []);
 
-  return <RouterProvider router={router as never} />;
+  const RouterContext = getRouterContext();
+  return <RouterContext.Provider value={router as never}>{children}</RouterContext.Provider>;
 }
+
 
