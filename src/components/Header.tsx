@@ -22,18 +22,19 @@ const NotificationBell = (props: any) => (
 );
 import { useMenuItemsByLocations } from '@/hooks/useMenuItems';
 import Logo from '@/components/Logo';
+import { cn } from '@/lib/utils';
 
 /* ── Geo badge (full & compact) ───────────────────────────── */
 type GeoBadgeProps = { city: string | null; temp: number | null; compact?: boolean; className?: string };
 const GeoBadge = forwardRef<HTMLSpanElement, GeoBadgeProps>(({ city, temp, compact = false, className = '' }, ref) => {
   // Always render a placeholder to prevent layout shift
   if (!city) {
-    return <span ref={ref} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] h-[22px] ${className}`} />;
+    return <span ref={ref} className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] h-[22px]', className)} />;
   }
 
   if (compact) {
     return (
-      <span ref={ref} className={`inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground ${className}`}>
+      <span ref={ref} className={cn('inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground', className)}>
         <MapPin className="h-3 w-3 text-accent" />
         {city.length > 12 ? city.slice(0, 12) + '…' : city}
         {temp !== null && (
@@ -49,7 +50,7 @@ const GeoBadge = forwardRef<HTMLSpanElement, GeoBadgeProps>(({ city, temp, compa
   return (
     <span
       ref={ref}
-      className={`inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-all duration-500 ease-out ${className}`}
+      className={cn('inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-all duration-500 ease-out', className)}
     >
       <MapPin className="h-3 w-3 text-accent" />
       {city}
