@@ -1,28 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import ServiceFillAssistant from '@/components/dashboard/ServiceFillAssistant';
 import { computeAdScore, lintServiceDescription, shouldBlockByLeilao } from '@/lib/serviceQualityLinter';
 
 describe('cadastro de serviço no celular', () => {
   it('preenche título e descrição sem sair da tela', async () => {
-    const user = userEvent.setup();
-    let applied: { title: string; description: string } | null = null;
+    const applied: Array<{ title: string; description: string }> = [];
     render(
       <ServiceFillAssistant
         categorySlug="eletricista"
         categoryName="Eletricista"
         cityName="Salvador"
         serviceName=""
-        onApply={(title, description) => { applied = { title, description }; }}
+        onApply={(title, description) => { applied.push({ title, description }); }}
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Preencher com ajuda' }));
-    await user.click(screen.getByRole('button', { name: /Instalação de Chuveiro/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Preencher com ajuda' }));
+    fireEvent.click(screen.getByRole('button', { name: /Instalação de Chuveiro/i }));
 
-    expect(applied?.title).toBe('Instalação de Chuveiro');
-    expect(applied?.description.length).toBeGreaterThan(80);
+    expect(applied[0]?.title).toBe('Instalação de Chuveiro');
+    expect(applied[0]?.description.length).toBeGreaterThan(80);
   });
 
   it('não bloqueia um anúncio mínimo por falta de foto ou descrição', () => {
