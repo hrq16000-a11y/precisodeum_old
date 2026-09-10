@@ -51,3 +51,11 @@ Demais blocos ficam listados como tickets prontos para as próximas iterações.
 - [ ] **ADM-02** Painel "Saúde do Sistema" consolidando GSC, e-mail e integridade.
 - [ ] **UX-01** Correções mobile na Home.
 - [ ] **UX-02** Mensagens de upload mais claras (erro, tamanho, formato).
+
+## Incidente de conversão — cadastro de serviços mobile (2026-09-10)
+
+- [ ] Remover bloqueios contraditórios entre qualidade do anúncio e publicação.
+- [ ] Criar assistente de preenchimento visível e simples no celular.
+- [ ] Corrigir sobreposição da navegação inferior e largura/rolagem do formulário.
+- [ ] Tornar erros acionáveis e levar o foco ao campo que precisa de correção.
+- [ ] Validar criação e persistência do serviço em celular e desktop.
