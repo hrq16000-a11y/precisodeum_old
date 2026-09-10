@@ -74,8 +74,8 @@ test.describe('Signup → logout → login (multi-viewport)', () => {
       // ---- Logout
       await signOutFromApp(page);
 
-      // ---- Volta para /entrar e loga com a mesma senha
-      await page.goto('/entrar', { waitUntil: 'domcontentloaded' });
+      // ---- Volta para /login e loga com a mesma senha
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
       await page
         .waitForFunction(() => !!document.querySelector('form[data-form-ready="1"]'), null, {
           timeout: 45_000,
