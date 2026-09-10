@@ -48,13 +48,13 @@ async function setupWithUploadedFile() {
   );
   // Simula seleção de arquivo válido (PDF pequeno)
   const file = new File([new Uint8Array([1, 2, 3])], 'cnpj.pdf', { type: 'application/pdf' });
-  const inputs = utils.container.querySelectorAll<HTMLInputElement>('input[type=file]');
+  const inputs = document.body.querySelectorAll<HTMLInputElement>('input[type=file]');
   await act(async () => {
     fireEvent.change(inputs[0], { target: { files: [file] } });
   });
   await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
   // Marca os 3 checkboxes
-  const checkboxes = utils.container.querySelectorAll<HTMLButtonElement>('button[role=checkbox]');
+  const checkboxes = document.body.querySelectorAll<HTMLButtonElement>('button[role=checkbox]');
   for (const cb of Array.from(checkboxes)) {
     await act(async () => { fireEvent.click(cb); });
   }
