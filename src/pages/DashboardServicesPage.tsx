@@ -993,7 +993,7 @@ const DashboardServicesPage = () => {
                   <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                     formStep === n ? 'bg-accent text-accent-foreground' : formStep > n ? 'bg-accent/30 text-accent' : 'bg-muted text-muted-foreground'
                   }`}>
-                    {formStep > n ? '✓' : n}
+                    {formStep > n ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : n}
                   </div>
                   {n < 4 && <div className={`h-0.5 w-6 ${formStep > n ? 'bg-accent/40' : 'bg-muted'}`} />}
                 </div>
