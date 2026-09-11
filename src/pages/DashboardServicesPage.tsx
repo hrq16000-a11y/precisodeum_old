@@ -29,7 +29,7 @@ import {
   shouldBlockByLeilao,
   LEILAO_BLOCK_THRESHOLD,
 } from '@/lib/serviceQualityLinter';
-import { CheckCircle2, AlertTriangle, Sparkles, Award } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Sparkles, Award, Check, Smartphone, Instagram, Facebook, Youtube, Megaphone, Building2, Map } from 'lucide-react';
 import AdQualityScore from '@/components/dashboard/AdQualityScore';
 import AdLivePreview from '@/components/dashboard/AdLivePreview';
 import GoldChecklist from '@/components/dashboard/GoldChecklist';
@@ -284,7 +284,7 @@ const DashboardServicesPage = () => {
   const handleSave = async () => {
     // Friendly anti double-click: warn but don't crash
     if (isSubmitting) {
-      toast.info('🚀 Calma, mestre! Já estamos salvando seu talento, só um segundo...', { duration: 2500 });
+      toast.info('Já estamos salvando seu serviço, só um segundo...', { duration: 2500 });
       return;
     }
     if (isRH) { toast.error('Agências RH não podem cadastrar serviços.'); return; }
@@ -506,10 +506,10 @@ const DashboardServicesPage = () => {
             duration: 6000,
           });
         }
-        toast.success('🎉 Você ganhou um novo slot!', {
+        toast.success('Você ganhou um novo slot!', {
           description: unlockedNext
             ? `Seu ${newCount + 1}º espaço na vitrine já está liberado. Continue subindo!`
-            : 'Você atingiu o nível máximo de serviços. Que máquina! 🚀',
+            : 'Você atingiu o nível máximo de serviços.',
           duration: 5000,
         });
         setEditId(serviceId!);
@@ -993,7 +993,7 @@ const DashboardServicesPage = () => {
                   <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                     formStep === n ? 'bg-accent text-accent-foreground' : formStep > n ? 'bg-accent/30 text-accent' : 'bg-muted text-muted-foreground'
                   }`}>
-                    {formStep > n ? '✓' : n}
+                    {formStep > n ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : n}
                   </div>
                   {n < 4 && <div className={`h-0.5 w-6 ${formStep > n ? 'bg-accent/40' : 'bg-muted'}`} />}
                 </div>
@@ -1373,9 +1373,9 @@ const DashboardServicesPage = () => {
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="local">📍 Atendimento no local</SelectItem>
-                      <SelectItem value="city">🏙️ Toda a cidade</SelectItem>
-                      <SelectItem value="metro">🗺️ Região Metropolitana</SelectItem>
+                      <SelectItem value="local"><span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" aria-hidden="true" />Atendimento no local</span></SelectItem>
+                      <SelectItem value="city"><span className="inline-flex items-center gap-2"><Building2 className="h-4 w-4" aria-hidden="true" />Toda a cidade</span></SelectItem>
+                      <SelectItem value="metro"><span className="inline-flex items-center gap-2"><Map className="h-4 w-4" aria-hidden="true" />Região Metropolitana</span></SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1399,7 +1399,7 @@ const DashboardServicesPage = () => {
             {formStep === 3 && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                📱 Contato & Mídia
+                <Smartphone className="h-3.5 w-3.5" aria-hidden="true" /> Contato &amp; Mídia
               </h3>
               <div className="rounded-lg border border-border bg-card p-3 space-y-3">
                 <div>
@@ -1456,15 +1456,15 @@ const DashboardServicesPage = () => {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">Redes Sociais</label>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">📸</span>
-                    <input name="instagram_url" value={form.instagram_url} onChange={handleChange} placeholder="https://instagram.com/seu_perfil" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
+                    <Instagram className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <input name="instagram_url" value={form.instagram_url} onChange={handleChange} placeholder="https://instagram.com/seu_perfil" aria-label="Instagram" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">📘</span>
-                    <input name="facebook_url" value={form.facebook_url} onChange={handleChange} placeholder="https://facebook.com/sua_pagina" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
+                    <Facebook className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <input name="facebook_url" value={form.facebook_url} onChange={handleChange} placeholder="https://facebook.com/sua_pagina" aria-label="Facebook" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">🎬</span>
+                    <Youtube className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     <input name="youtube_url" value={form.youtube_url} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
                   </div>
                 </div>
@@ -1743,7 +1743,11 @@ const DashboardServicesPage = () => {
                             : ''
                       }
                     >
-                      {isSubmitting ? '⏳ Salvando...' : `📢 ${editId ? 'Salvar' : 'Publicar'}`}
+                      {isSubmitting ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Salvando...</>
+                      ) : (
+                        <><Megaphone className="h-4 w-4" aria-hidden="true" /> {editId ? 'Salvar' : 'Publicar'}</>
+                      )}
                     </Button>
                   );
                 })()}
