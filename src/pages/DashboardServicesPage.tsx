@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
-import { compressImage } from '@/lib/compressImage';
 import { getSuggestedTags } from '@/data/tagSuggestions';
 import { useNavigate, useSearchParams } from '@/lib/router-compat';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -98,10 +97,7 @@ const DashboardServicesPage = () => {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [serviceImages, setServiceImages] = useState<Record<string, string>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingGalleryPhotos, setUploadingGalleryPhotos] = useState(false);
-  const [newServicePhoto, setNewServicePhoto] = useState<File | null>(null);
-  const [newServicePhotoPreview, setNewServicePhotoPreview] = useState<string | null>(null);
   const [showNextStepPrompt, setShowNextStepPrompt] = useState(false);
 
   // New professional fields
@@ -274,36 +270,6 @@ const DashboardServicesPage = () => {
   const profileType = (profile as any)?.profile_type || (profile as any)?.role || 'client';
   const isRH = profileType === 'rh';
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('Imagem excede 5MB'); return; }
-    setNewServicePhoto(file);
-    setNewServicePhotoPreview(URL.createObjectURL(file));
-  };
-
-  const uploadPhoto = async (serviceId: string): Promise<void> => {
-    if (!newServicePhoto || !user) return;
-    setUploadingPhoto(true);
-    try {
-      const compressed = await compressImage(newServicePhoto, { maxDimension: 1200, targetKB: 300 });
-      const ext = compressed.name.split('.').pop();
-      const path = `${user.id}/${serviceId}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('service-images').upload(path, compressed);
-      if (error) { toast.error('Erro ao enviar foto: ' + error.message); return; }
-      const { data: urlData } = supabase.storage.from('service-images').getPublicUrl(path);
-      const { error: dbErr } = await supabase.from('service_images').insert({
-        service_id: serviceId,
-        image_url: urlData.publicUrl,
-        display_order: 0,
-      });
-      if (dbErr) { toast.error('Erro ao salvar foto: ' + dbErr.message); return; }
-      toast.success('Foto enviada com sucesso!');
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
   // Add tag
   const addTag = () => {
     const tag = tagInput.trim().replace(/^#/, '').toLowerCase();
@@ -378,7 +344,7 @@ const DashboardServicesPage = () => {
     const cityValidatedForGate = isCatalogedCity(cleanedArea, ALL_CITIES);
     const gateScore = computeAdScore({
       description: form.description,
-      hasOriginalPhoto: !!newServicePhoto || (!!editId && !!serviceImages[editId]),
+      hasOriginalPhoto: !!editId && !!serviceImages[editId],
       cityValidated: cityValidatedForGate,
       categorySlugs: selectedSlugsForGate,
     });
@@ -431,7 +397,7 @@ const DashboardServicesPage = () => {
       .filter(Boolean) as string[];
     const initialScoreSnapshot = computeAdScore({
       description: form.description,
-      hasOriginalPhoto: !!newServicePhoto || (!!editId && !!serviceImages[editId]),
+      hasOriginalPhoto: !!editId && !!serviceImages[editId],
       cityValidated: isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES),
       categorySlugs: selectedSlugsForScore,
     }).score;
@@ -497,12 +463,6 @@ const DashboardServicesPage = () => {
         serviceId = data.service_id;
       }
 
-      if (serviceId) {
-        if (!editId && newServicePhoto) {
-          await uploadPhoto(serviceId);
-        }
-      }
-
       trackAction('service_save_success', editId ? 'Serviço atualizado' : 'Serviço criado');
 
       if (editId) {
@@ -521,7 +481,7 @@ const DashboardServicesPage = () => {
         celebrate({ intensity: 'mini', id: CELEBRATION_IDS.serviceSlot(serviceId!) });
         const finalScore = computeAdScore({
           description: form.description,
-          hasOriginalPhoto: !!newServicePhoto,
+          hasOriginalPhoto: false,
           cityValidated: isCatalogedCity(stripLegacyAreaPrefixes(finalArea), ALL_CITIES),
           categorySlugs: selectedSlugsForScore,
         });
@@ -594,8 +554,6 @@ const DashboardServicesPage = () => {
     setGeoDetected(!provider?.city && !!geo.city);
     setSelectedCategoryIds([]);
     setEditId(null);
-    setNewServicePhoto(null);
-    setNewServicePhotoPreview(null);
     setFormErrors({});
     setIsEmergency(false);
     setServiceRadius('city');
@@ -656,8 +614,6 @@ const DashboardServicesPage = () => {
     setEditId(s.id);
     const { data } = await supabase.from('service_categories').select('category_id').eq('service_id', s.id);
     setSelectedCategoryIds((data || []).map((d: any) => d.category_id));
-    setNewServicePhoto(null);
-    setNewServicePhotoPreview(null);
     setFormStep(1);
     setShowDialog(true);
   };
@@ -1269,7 +1225,7 @@ const DashboardServicesPage = () => {
                   <div className="mt-3 space-y-3">
                     <AdQualityScore
                       description={form.description}
-                      hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                      hasOriginalPhoto={!!editId && !!serviceImages[editId]}
                       cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
                       categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
                     />
@@ -1278,7 +1234,7 @@ const DashboardServicesPage = () => {
                       description={form.description}
                       city={stripLegacyAreaPrefixes(form.service_area)}
                       cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
-                      hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                      hasOriginalPhoto={!!editId && !!serviceImages[editId]}
                       categoryName={categories.find((c: any) => selectedCategoryIds.includes(c.id))?.name}
                       categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
                     />
@@ -1526,7 +1482,7 @@ const DashboardServicesPage = () => {
                 {/* Score "Anúncio Padrão Ouro" — barra 0-100% */}
                 <AdQualityScore
                   description={form.description}
-                  hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                  hasOriginalPhoto={!!editId && !!serviceImages[editId]}
                   cityValidated={isCatalogedCity(stripLegacyAreaPrefixes(form.service_area), ALL_CITIES)}
                   categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
                 />
@@ -1595,7 +1551,7 @@ const DashboardServicesPage = () => {
               const divergence = serviceRadius === 'city' && provider?.city && cleanedArea && cleanedArea.toLowerCase() !== provider.city.toLowerCase();
               const score = computeAdScore({
                 description: form.description,
-                hasOriginalPhoto: !!newServicePhoto || (!!editId && !!serviceImages[editId]),
+                hasOriginalPhoto: !!editId && !!serviceImages[editId],
                 cityValidated,
                 hasPrice: !!form.price?.trim(),
                 hasCategory: selectedCategoryIds.length > 0,
@@ -1669,7 +1625,7 @@ const DashboardServicesPage = () => {
                     {/* Score breakdown final */}
                     <AdQualityScore
                       description={form.description}
-                      hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                      hasOriginalPhoto={!!editId && !!serviceImages[editId]}
                       cityValidated={cityValidated}
                       categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
                     />
@@ -1677,7 +1633,7 @@ const DashboardServicesPage = () => {
                     {/* Checklist dinâmico do Padrão Ouro */}
                     <GoldChecklist
                       description={form.description}
-                      hasOriginalPhoto={!!newServicePhoto || (!!editId && !!serviceImages[editId])}
+                      hasOriginalPhoto={!!editId && !!serviceImages[editId]}
                       cityValidated={cityValidated}
                       categorySlugs={selectedCategoryIds.map((id) => categories.find((c: any) => c.id === id)?.slug).filter(Boolean) as string[]}
                     />
