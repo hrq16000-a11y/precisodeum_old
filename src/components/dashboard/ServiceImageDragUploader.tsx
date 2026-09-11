@@ -110,9 +110,12 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
   const [status, setStatus] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const mountedRef = useRef(true);
 
-  useEffect(() => () => {
-    mountedRef.current = false;
-    onUploadingChange?.(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      onUploadingChange?.(false);
+    };
   }, [onUploadingChange]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
