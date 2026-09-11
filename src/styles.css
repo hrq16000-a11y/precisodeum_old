@@ -833,6 +833,6 @@ button, a, [role="button"] {
   .motion-dialog {
     animation: none !important;
     opacity: 1 !important;
-    transform: translate(-50%, -50%) !important;
+    transform: none !important;
   }
 }
