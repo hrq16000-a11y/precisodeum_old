@@ -19,10 +19,9 @@ const SponsorPublicPage = () => {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      // LGPD/A1: anon não tem SELECT em cnpj/email/whatsapp/phone.
-      // Lista explícita evita "permission denied for column ..." no select('*').
+      // Public reads use the safe projection, which never exposes contact or tax data.
       const { data } = await supabase
-        .from('sponsors')
+        .from('sponsors_public')
         .select(
           'id, user_id, slug, title, company_name, short_description, full_description, ' +
           'logo_url, image_url, link_url, external_link, ' +
@@ -31,7 +30,6 @@ const SponsorPublicPage = () => {
           'campaign_start, campaign_end, deleted_at, created_at'
         )
         .eq('slug', slug)
-        .is('deleted_at', null)
         .maybeSingle();
       setSponsor(data);
       setLoading(false);

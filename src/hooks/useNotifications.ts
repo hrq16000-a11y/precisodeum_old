@@ -70,26 +70,13 @@ export function useNotifications(options?: { limit?: number | null }) {
     // collided on fast mobile renders, causing Supabase to reuse an already
     // subscribed channel and throw while registering the next callback.
     const channelName = nextNotificationChannelName(user.id);
+    // One wildcard callback is deliberately used instead of three chained
+    // callbacks. On fast mobile remounts the realtime client could regard the
+    // channel as subscribed between chained registrations and crash the app.
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}`,
-      }, () => {
-        queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}`,
-      }, () => {
-        queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
-      })
-      .on('postgres_changes', {
-        event: 'DELETE',
+        event: '*',
         schema: 'public',
         table: 'notifications',
         filter: `user_id=eq.${user.id}`,
