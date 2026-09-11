@@ -11696,6 +11696,14 @@ export type Database = {
       }
       process_daily_stats: { Args: never; Returns: number }
       process_lead_followup_reminders: { Args: never; Returns: Json }
+      profile_protected_unchanged: {
+        Args: { _id: string; _new: Json }
+        Returns: boolean
+      }
+      provider_protected_unchanged: {
+        Args: { _id: string; _new: Json }
+        Returns: boolean
+      }
       publish_my_provider: { Args: never; Returns: Json }
       purge_cold_storage_91d: { Args: never; Returns: number }
       purge_onboarding_events: { Args: never; Returns: Json }

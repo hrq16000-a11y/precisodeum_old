@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Save, Zap, Tag, X } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Save, Zap, Tag, X, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SmartCategoryPicker from '@/components/SmartCategoryPicker';
+
+const ServiceImageUpload = lazy(() => import('@/components/dashboard/ServiceImageDragUploader'));
 
 interface ServiceEditDialogProps {
   service: any | null;
@@ -39,6 +41,12 @@ const ServiceEditDialog = ({ service, onClose, onSaved }: ServiceEditDialogProps
   const [categories, setCategories] = useState<any[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setAdminUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     if (service) {
@@ -238,11 +246,24 @@ const ServiceEditDialog = ({ service, onClose, onSaved }: ServiceEditDialogProps
               </Select>
             </div>
           </div>
+
+          {service?.id && adminUserId && (
+            <div className="pt-2 border-t">
+              <Label className="flex items-center gap-1 mb-2"><ImagePlus className="h-3.5 w-3.5" /> Fotos do serviço</Label>
+              <Suspense fallback={<p className="text-xs text-muted-foreground">Carregando fotos...</p>}>
+                <ServiceImageUpload
+                  serviceId={service.id}
+                  userId={adminUserId}
+                  onUploadingChange={setUploadingPhotos}
+                />
+              </Suspense>
+            </div>
+          )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-1" /> {saving ? 'Salvando...' : 'Salvar'}
+          <Button variant="outline" onClick={onClose} disabled={uploadingPhotos}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving || uploadingPhotos}>
+            <Save className="h-4 w-4 mr-1" /> {saving ? 'Salvando...' : uploadingPhotos ? 'Enviando fotos...' : 'Salvar'}
           </Button>
         </DialogFooter>
       </DialogContent>
