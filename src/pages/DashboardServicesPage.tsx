@@ -556,8 +556,6 @@ const DashboardServicesPage = () => {
         setWizardStep('photos');
         // Serviço publicado — limpa o rascunho local.
         clearServiceWizardDraft(user?.id);
-        // Trigger "hand-holding" next-step prompt after a short delay
-        setTimeout(() => setShowNextStepPrompt(true), 1200);
       }
       await fetchServices(providerId);
       refetchLimits();
@@ -979,7 +977,14 @@ const DashboardServicesPage = () => {
 
       {/* ─── New/Edit Sheet (lazy mount: árvore só existe quando showDialog=true) ─── */}
       {showDialog && (
-      <Sheet open={showDialog} onOpenChange={(open) => { if (!open) { resetForm(); } setShowDialog(open); }}>
+      <Sheet open={showDialog} onOpenChange={(open) => {
+        if (!open && uploadingGalleryPhotos) {
+          toast.info('Aguarde o envio das fotos terminar.');
+          return;
+        }
+        if (!open) resetForm();
+        setShowDialog(open);
+      }}>
         <SheetContent
           side="right"
           className="h-dvh w-full max-w-full sm:max-w-xl p-0 flex flex-col gap-0 overflow-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-accent/60 [&::-webkit-scrollbar-thumb]:rounded-full"
@@ -1704,7 +1709,11 @@ const DashboardServicesPage = () => {
               <Button
                 variant="accent"
                 className="flex-1 h-11 font-semibold"
-                onClick={() => { resetForm(); setShowDialog(false); }}
+                onClick={() => {
+                  resetForm();
+                  setShowDialog(false);
+                  setShowNextStepPrompt(true);
+                }}
                 disabled={uploadingGalleryPhotos}
               >
                 {uploadingGalleryPhotos ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando fotos...</> : <><CheckCircle2 className="mr-2 h-4 w-4" /> Concluir</>}

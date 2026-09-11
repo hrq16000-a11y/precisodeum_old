@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   DragEndEvent,
@@ -108,6 +108,12 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [status, setStatus] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    onUploadingChange?.(false);
+  }, [onUploadingChange]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -216,6 +222,7 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
         }
       }
 
+      if (!mountedRef.current) return;
       await fetchImages();
       if (uploadedCount > 0) {
         setStatus({
@@ -227,11 +234,15 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
       }
     } catch (error) {
       console.error('[ServiceImageDragUploader] upload failed', error);
-      setStatus({ kind: 'error', message: 'O envio foi interrompido. Suas fotos salvas continuam seguras; tente novamente.' });
+      if (mountedRef.current) {
+        setStatus({ kind: 'error', message: 'O envio foi interrompido. Suas fotos salvas continuam seguras; tente novamente.' });
+      }
     } finally {
-      setUploading(false);
       onUploadingChange?.(false);
-      setProgress(null);
+      if (mountedRef.current) {
+        setUploading(false);
+        setProgress(null);
+      }
       e.target.value = '';
     }
   };
