@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { compressToWebP } from '@/lib/imageToWebp';
 import { handleImageError } from '@/lib/imageResolver';
+import { classifyUploadError, userMessageFor, type UploadErrorKind } from '@/lib/uploadErrors';
+import { recordStageTelemetry, type UploadStage } from '@/lib/uploadStageTelemetry';
 
 interface ServiceImage {
   id: string;
