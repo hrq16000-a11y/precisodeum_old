@@ -1399,7 +1399,7 @@ const DashboardServicesPage = () => {
             {formStep === 3 && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                📱 Contato & Mídia
+                <Smartphone className="h-3.5 w-3.5" aria-hidden="true" /> Contato &amp; Mídia
               </h3>
               <div className="rounded-lg border border-border bg-card p-3 space-y-3">
                 <div>
