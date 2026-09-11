@@ -8742,6 +8742,57 @@ export type Database = {
           },
         ]
       }
+      agencies_public: {
+        Row: {
+          city: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          logo_url: string | null
+          name: string | null
+          slug: string | null
+          state: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_ref: string | null
+          website: string | null
+        }
+        Insert: {
+          city?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_ref?: string | null
+          website?: string | null
+        }
+        Update: {
+          city?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_ref?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       city_provider_stats: {
         Row: {
           city_id: string | null
@@ -8789,6 +8840,117 @@ export type Database = {
           user_ref?: string | null
         }
         Relationships: []
+      }
+      jobs_public: {
+        Row: {
+          activities: string | null
+          approval_status: string | null
+          benefits: string | null
+          category_id: string | null
+          city: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          deadline: string | null
+          deleted_at: string | null
+          description: string | null
+          external_id: string | null
+          id: string | null
+          import_source_id: string | null
+          job_type: string | null
+          neighborhood: string | null
+          opportunity_type: string | null
+          requirements: string | null
+          salary: string | null
+          schedule: string | null
+          slug: string | null
+          state: string | null
+          status: string | null
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_ref: string | null
+          view_count: number | null
+          work_model: string | null
+        }
+        Insert: {
+          activities?: string | null
+          approval_status?: string | null
+          benefits?: string | null
+          category_id?: string | null
+          city?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          external_id?: string | null
+          id?: string | null
+          import_source_id?: string | null
+          job_type?: string | null
+          neighborhood?: string | null
+          opportunity_type?: string | null
+          requirements?: string | null
+          salary?: string | null
+          schedule?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_ref?: string | null
+          view_count?: number | null
+          work_model?: string | null
+        }
+        Update: {
+          activities?: string | null
+          approval_status?: string | null
+          benefits?: string | null
+          category_id?: string | null
+          city?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          external_id?: string | null
+          id?: string | null
+          import_source_id?: string | null
+          job_type?: string | null
+          neighborhood?: string | null
+          opportunity_type?: string | null
+          requirements?: string | null
+          salary?: string | null
+          schedule?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_ref?: string | null
+          view_count?: number | null
+          work_model?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_import_source_id_fkey"
+            columns: ["import_source_id"]
+            isOneToOne: false
+            referencedRelation: "job_import_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_conversion_daily: {
         Row: {
