@@ -573,7 +573,10 @@ const DashboardServicesPage = () => {
   };
 
   const resetForm = () => {
-    const detectedCity = geo.city || provider?.city || '';
+    // A cidade já confirmada no perfil é a fonte principal. Detecção por IP/GPS
+    // pode apontar para outra cidade (VPN, operadora móvel ou baixa precisão) e
+    // bloqueava a publicação por uma divergência que o usuário não criou.
+    const detectedCity = provider?.city || geo.city || '';
     setForm({
       service_name: '',
       description: '',
@@ -588,7 +591,7 @@ const DashboardServicesPage = () => {
       youtube_url: '',
     });
     setCitySearch(detectedCity);
-    setGeoDetected(!!geo.city && !provider?.city);
+    setGeoDetected(!provider?.city && !!geo.city);
     setSelectedCategoryIds([]);
     setEditId(null);
     setNewServicePhoto(null);
