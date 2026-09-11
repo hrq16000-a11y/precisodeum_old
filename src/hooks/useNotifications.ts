@@ -3,6 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthIdentity } from '@/hooks/useAuth';
 
+let notificationChannelSequence = 0;
+
+function nextNotificationChannelName(userId: string) {
+  notificationChannelSequence += 1;
+  const uniquePart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${notificationChannelSequence}`;
+  return `notifications-realtime-${userId}-${uniquePart}`;
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -56,7 +66,10 @@ export function useNotifications(options?: { limit?: number | null }) {
   // Realtime subscription
   useEffect(() => {
     if (!user?.id) return;
-    const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
+    // Several dashboard surfaces mount this hook simultaneously. Date.now() alone
+    // collided on fast mobile renders, causing Supabase to reuse an already
+    // subscribed channel and throw while registering the next callback.
+    const channelName = nextNotificationChannelName(user.id);
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', {

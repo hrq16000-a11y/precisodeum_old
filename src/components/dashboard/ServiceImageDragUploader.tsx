@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   DragEndEvent,
@@ -7,7 +7,7 @@ import {
   SortableContext, arrayMove, useSortable, rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ImagePlus, Trash2, Star, GripVertical, Loader2 } from 'lucide-react';
+import { ImagePlus, Trash2, Star, GripVertical, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ interface Props {
   userId: string;
   maxPhotos?: number;
   onChange?: (images: ServiceImage[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
 const MAX_DEFAULT = 5;
@@ -79,12 +80,12 @@ function SortableCard({
         <GripVertical className="h-3.5 w-3.5" />
       </button>
 
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-foreground/70 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute inset-x-0 bottom-0 flex min-h-11 items-center justify-between gap-1 bg-foreground/80 px-1.5 py-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
         {!img.is_cover && (
           <button
             type="button"
             onClick={() => onSetCover(img)}
-            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-background hover:bg-accent hover:text-accent-foreground"
+            className="inline-flex min-h-9 items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold text-background hover:bg-accent hover:text-accent-foreground"
           >
             <Star className="h-3 w-3" /> Definir capa
           </button>
@@ -92,7 +93,7 @@ function SortableCard({
         <button
           type="button"
           onClick={() => onDelete(img)}
-          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-background hover:bg-destructive hover:text-destructive-foreground"
+          className="inline-flex min-h-9 items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold text-background hover:bg-destructive hover:text-destructive-foreground"
         >
           <Trash2 className="h-3 w-3" /> Remover
         </button>
@@ -102,19 +103,33 @@ function SortableCard({
 }
 
 /* ───────── Main component ───────── */
-const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, onChange }: Props) => {
+const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, onChange, onUploadingChange }: Props) => {
   const [images, setImages] = useState<ServiceImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [status, setStatus] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      onUploadingChange?.(false);
+    };
+  }, [onUploadingChange]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const fetchImages = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('service_images')
       .select('*')
       .eq('service_id', serviceId)
       .order('display_order');
+    if (error) {
+      setStatus({ kind: 'error', message: 'Não foi possível carregar suas fotos. Tente novamente.' });
+      return;
+    }
     if (data) {
       setImages(data as any);
       onChange?.(data as any);
@@ -135,16 +150,27 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
     }
 
     setUploading(true);
+    onUploadingChange?.(true);
+    setStatus(null);
     setProgress({ current: 0, total: files.length });
     let nextOrder = images.length > 0 ? Math.max(...images.map(i => i.display_order)) + 1 : 0;
     const noCoverYet = !images.some(i => i.is_cover);
 
+    let uploadedCount = 0;
+    let failedCount = 0;
     try {
       for (let i = 0; i < files.length; i++) {
         setProgress({ current: i + 1, total: files.length });
         const raw = files[i];
         if (raw.size > 10 * 1024 * 1024) {
           toast.error(`${raw.name} excede 10MB`);
+          failedCount++;
+          continue;
+        }
+
+        if (!raw.type.startsWith('image/')) {
+          toast.error(`${raw.name} não é uma imagem válida`);
+          failedCount++;
           continue;
         }
 
@@ -153,6 +179,7 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
           compressed = await compressToWebP(raw, { maxWidth: 1600, quality: 0.82 });
         } catch (err: any) {
           toast.error(`Falha ao processar ${raw.name}: ${err.message}`);
+          failedCount++;
           continue;
         }
 
@@ -166,7 +193,8 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
           });
 
         if (upErr) {
-          toast.error(`Upload falhou: ${upErr.message}`);
+          toast.error(`Não foi possível enviar ${raw.name}. Tente novamente.`);
+          failedCount++;
           continue;
         }
 
@@ -181,10 +209,14 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
           storage_path: storagePath,
         } as any);
         if (insErr) {
-          toast.error(`DB falhou: ${insErr.message}`);
+          // Avoid leaving a file in storage when its database row failed.
+          await supabase.storage.from(BUCKET).remove([storagePath]);
+          toast.error(`Não foi possível salvar ${raw.name}. Tente novamente.`);
+          failedCount++;
           continue;
         }
         nextOrder++;
+        uploadedCount++;
 
         if (compressed.savingsPercent > 0) {
           const orig = (compressed.originalSize / 1024).toFixed(0);
@@ -193,22 +225,44 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
         }
       }
 
+      if (!mountedRef.current) return;
       await fetchImages();
+      if (uploadedCount > 0) {
+        setStatus({
+          kind: 'success',
+          message: `${uploadedCount} foto${uploadedCount === 1 ? '' : 's'} enviada${uploadedCount === 1 ? '' : 's'} com sucesso.`,
+        });
+      } else if (failedCount > 0) {
+        setStatus({ kind: 'error', message: 'Nenhuma foto foi enviada. Confira os arquivos e tente novamente.' });
+      }
+    } catch (error) {
+      console.error('[ServiceImageDragUploader] upload failed', error);
+      if (mountedRef.current) {
+        setStatus({ kind: 'error', message: 'O envio foi interrompido. Suas fotos salvas continuam seguras; tente novamente.' });
+      }
     } finally {
-      setUploading(false);
-      setProgress(null);
+      onUploadingChange?.(false);
+      if (mountedRef.current) {
+        setUploading(false);
+        setProgress(null);
+      }
       e.target.value = '';
     }
   };
 
   const handleDelete = async (img: ServiceImage) => {
-    if (img.storage_path) {
-      await supabase.storage.from(BUCKET).remove([img.storage_path]);
-    } else {
-      const m = img.image_url.split(`/${BUCKET}/`)[1];
-      if (m) await supabase.storage.from(BUCKET).remove([decodeURIComponent(m)]);
+    setStatus(null);
+    const { error: rowError } = await supabase.from('service_images').delete().eq('id', img.id);
+    if (rowError) {
+      setStatus({ kind: 'error', message: 'Não foi possível remover a foto. Tente novamente.' });
+      return;
     }
-    await supabase.from('service_images').delete().eq('id', img.id);
+
+    const storagePath = img.storage_path || (() => {
+      const match = img.image_url.split(`/${BUCKET}/`)[1];
+      return match ? decodeURIComponent(match) : null;
+    })();
+    if (storagePath) await supabase.storage.from(BUCKET).remove([storagePath]);
 
     // If the cover got deleted, promote the first remaining
     if (img.is_cover) {
@@ -223,8 +277,18 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
 
   const handleSetCover = async (img: ServiceImage) => {
     // Clear any existing cover, then set this one (unique partial index protects us).
-    await supabase.from('service_images').update({ is_cover: false } as any).eq('service_id', serviceId);
-    await supabase.from('service_images').update({ is_cover: true } as any).eq('id', img.id);
+    setStatus(null);
+    const { error: clearError } = await supabase.from('service_images').update({ is_cover: false } as any).eq('service_id', serviceId);
+    if (clearError) {
+      setStatus({ kind: 'error', message: 'Não foi possível trocar a capa. Tente novamente.' });
+      return;
+    }
+    const { error: coverError } = await supabase.from('service_images').update({ is_cover: true } as any).eq('id', img.id);
+    if (coverError) {
+      await supabase.from('service_images').update({ is_cover: true } as any).eq('id', images.find(item => item.is_cover)?.id ?? '');
+      setStatus({ kind: 'error', message: 'Não foi possível trocar a capa. Tente novamente.' });
+      return;
+    }
     toast.success('Foto de capa atualizada');
     fetchImages();
   };
@@ -253,6 +317,15 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
 
   return (
     <div className="space-y-3">
+      {status && (
+        <div
+          role={status.kind === 'error' ? 'alert' : 'status'}
+          className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${status.kind === 'error' ? 'border-destructive/30 bg-destructive/5 text-destructive' : 'border-accent/30 bg-accent/5 text-foreground'}`}
+        >
+          {status.kind === 'error' ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />}
+          <span>{status.message}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">Fotos do serviço</p>

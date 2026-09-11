@@ -9,6 +9,10 @@ const isBlockingOverlay = (element: Element | null) => {
   if (!element) return false;
   const blocker = element.closest('[data-radix-dialog-overlay], [role="dialog"], [data-ui-blocker], .fixed, .absolute');
   if (!blocker) return false;
+  // An open, labelled Radix dialog/sheet intentionally covers the dashboard.
+  // It is interactive UI, not a frozen overlay.
+  if (blocker.matches('[role="dialog"][data-state="open"]')) return false;
+  if (blocker.matches('[data-radix-dialog-overlay][data-state="open"]')) return false;
   const main = element.closest('[data-dashboard-main="true"]');
   if (main) return false;
 
