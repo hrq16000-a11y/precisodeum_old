@@ -284,7 +284,7 @@ const DashboardServicesPage = () => {
   const handleSave = async () => {
     // Friendly anti double-click: warn but don't crash
     if (isSubmitting) {
-      toast.info('🚀 Calma, mestre! Já estamos salvando seu talento, só um segundo...', { duration: 2500 });
+      toast.info('Já estamos salvando seu serviço, só um segundo...', { duration: 2500 });
       return;
     }
     if (isRH) { toast.error('Agências RH não podem cadastrar serviços.'); return; }
