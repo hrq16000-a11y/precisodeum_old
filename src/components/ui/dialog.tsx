@@ -36,7 +36,9 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "motion-dialog fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+        "motion-dialog fixed left-[50%] top-[50%] z-[51] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+        // Mobile: nunca deixar o conteúdo estourar a largura da tela.
+        "max-w-[calc(100vw-1.5rem)] overflow-x-hidden [&>*]:min-w-0",
         className,
       )}
       {...props}
