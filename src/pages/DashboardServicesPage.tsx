@@ -1373,9 +1373,9 @@ const DashboardServicesPage = () => {
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="local">📍 Atendimento no local</SelectItem>
-                      <SelectItem value="city">🏙️ Toda a cidade</SelectItem>
-                      <SelectItem value="metro">🗺️ Região Metropolitana</SelectItem>
+                      <SelectItem value="local"><span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" aria-hidden="true" />Atendimento no local</span></SelectItem>
+                      <SelectItem value="city"><span className="inline-flex items-center gap-2"><Building2 className="h-4 w-4" aria-hidden="true" />Toda a cidade</span></SelectItem>
+                      <SelectItem value="metro"><span className="inline-flex items-center gap-2"><Map className="h-4 w-4" aria-hidden="true" />Região Metropolitana</span></SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
