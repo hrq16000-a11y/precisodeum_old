@@ -29,7 +29,7 @@ import {
   shouldBlockByLeilao,
   LEILAO_BLOCK_THRESHOLD,
 } from '@/lib/serviceQualityLinter';
-import { CheckCircle2, AlertTriangle, Sparkles, Award } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Sparkles, Award, Check, Smartphone, Instagram, Facebook, Youtube, Megaphone, Building2, Map } from 'lucide-react';
 import AdQualityScore from '@/components/dashboard/AdQualityScore';
 import AdLivePreview from '@/components/dashboard/AdLivePreview';
 import GoldChecklist from '@/components/dashboard/GoldChecklist';
