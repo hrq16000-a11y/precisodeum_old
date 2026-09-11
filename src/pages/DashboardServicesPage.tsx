@@ -99,6 +99,7 @@ const DashboardServicesPage = () => {
   const [serviceImages, setServiceImages] = useState<Record<string, string>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingGalleryPhotos, setUploadingGalleryPhotos] = useState(false);
   const [newServicePhoto, setNewServicePhoto] = useState<File | null>(null);
   const [newServicePhotoPreview, setNewServicePhotoPreview] = useState<string | null>(null);
   const [showNextStepPrompt, setShowNextStepPrompt] = useState(false);
@@ -1012,7 +1013,7 @@ const DashboardServicesPage = () => {
                 </div>
                 <div className="rounded-lg border border-border bg-card p-3">
                   <Suspense fallback={<SuspenseFallback />}>
-                    <ServiceImageUpload serviceId={editId} userId={user.id} />
+                    <ServiceImageUpload serviceId={editId} userId={user.id} onUploadingChange={setUploadingGalleryPhotos} />
                   </Suspense>
                 </div>
               </div>
@@ -1704,8 +1705,9 @@ const DashboardServicesPage = () => {
                 variant="accent"
                 className="flex-1 h-11 font-semibold"
                 onClick={() => { resetForm(); setShowDialog(false); }}
+                disabled={uploadingGalleryPhotos}
               >
-                ✅ Concluir
+                {uploadingGalleryPhotos ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando fotos...</> : <><CheckCircle2 className="mr-2 h-4 w-4" /> Concluir</>}
               </Button>
             ) : (
               <>
