@@ -32,9 +32,9 @@ const JobDetailPage = () => {
   const { data: job, isLoading } = useQuery({
     queryKey: ['job-detail', slug],
     queryFn: async () => {
-      const { data: bySlug } = await supabase.from('jobs').select(`${JOB_PUBLIC_COLUMNS}, categories(name, slug, icon)` as const).eq('slug', slug!).maybeSingle();
+      const { data: bySlug } = await supabase.from('jobs_public').select(`${JOB_PUBLIC_COLUMNS}, categories(name, slug, icon)` as const).eq('slug', slug!).maybeSingle();
       if (bySlug) return bySlug;
-      const { data: byId } = await supabase.from('jobs').select(`${JOB_PUBLIC_COLUMNS}, categories(name, slug, icon)` as const).eq('id', slug!).maybeSingle();
+      const { data: byId } = await supabase.from('jobs_public').select(`${JOB_PUBLIC_COLUMNS}, categories(name, slug, icon)` as const).eq('id', slug!).maybeSingle();
       return byId;
     },
   });
@@ -146,7 +146,7 @@ const JobDetailPage = () => {
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             {job.cover_image_url && (
-              <img src={job.cover_image_url} alt={job.title} className="w-full rounded-xl object-cover max-h-80" loading="lazy" />
+              <img src={job.cover_image_url} alt={job.title ?? 'Vaga'} className="w-full rounded-xl object-cover max-h-80" loading="lazy" />
             )}
 
             <div>

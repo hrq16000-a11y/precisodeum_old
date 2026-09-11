@@ -26,7 +26,7 @@ const AgencyPublicPage = () => {
       // LGPD: anon não tem SELECT em cnpj/legal_name/email/whatsapp.
       // Lista explícita evita "permission denied for column ..." no select('*').
       const { data } = await supabase
-        .from('agencies')
+        .from('agencies_public')
         .select('id, user_id, slug, name, description, city, state, website, logo_url, cover_image_url, status, created_at')
         .eq('slug', slug)
         .eq('status', 'approved')
@@ -34,7 +34,7 @@ const AgencyPublicPage = () => {
       setAgency(data);
       if (data?.user_id) {
         const { data: js } = await supabase
-          .from('jobs')
+          .from('jobs_public')
           .select('id, title, city, state, slug, created_at')
           .eq('user_id', data.user_id)
           .eq('status', 'active')

@@ -123,7 +123,7 @@ const JobsPage = () => {
       const to = from + perPage - 1;
 
       let query = supabase
-        .from('jobs')
+        .from('jobs_public')
         .select(`${JOB_PUBLIC_COLUMNS}, categories(name, slug, icon)` as const, { count: 'exact' })
         .eq('status', 'active')
         .is('deleted_at', null);
@@ -165,7 +165,7 @@ const JobsPage = () => {
     queryKey: ['jobs-noCity-paginated', search, jobTypeFilter, workModelFilter, opportunityFilter, categoryFilter, sortBy],
     queryFn: async () => {
       let query = supabase
-        .from('jobs')
+        .from('jobs_public')
         .select(`${JOB_PUBLIC_COLUMNS}, categories(name, slug, icon)` as const, { count: 'exact' })
         .eq('status', 'active')
         .is('deleted_at', null)
@@ -209,7 +209,7 @@ const JobsPage = () => {
   const { data: oppStats } = useQuery({
     queryKey: ['jobs-opp-stats'],
     queryFn: async () => {
-      const base = supabase.from('jobs').select('opportunity_type').eq('status', 'active').is('deleted_at', null);
+      const base = supabase.from('jobs_public').select('opportunity_type').eq('status', 'active').is('deleted_at', null);
       const { data } = await base;
       const counts: Record<string, number> = { emprego: 0, servico: 0, freelance: 0 };
       (data || []).forEach((j: any) => { if (counts[j.opportunity_type] !== undefined) counts[j.opportunity_type]++; });

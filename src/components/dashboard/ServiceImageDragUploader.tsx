@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { compressToWebP } from '@/lib/imageToWebp';
 import { handleImageError } from '@/lib/imageResolver';
+import { classifyUploadError, userMessageFor, type UploadErrorKind } from '@/lib/uploadErrors';
+import { recordStageTelemetry, type UploadStage } from '@/lib/uploadStageTelemetry';
 
 interface ServiceImage {
   id: string;
@@ -140,7 +142,30 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
 
   const remainingSlots = maxPhotos - images.length;
 
-  /* Upload pipeline: compress → upload → DB row */
+  /** Remove arquivos que ficaram no storage sem linha no banco (órfãos). */
+  const cleanupOrphans = useCallback(async () => {
+    try {
+      const prefix = `${userId}/${serviceId}`;
+      const { data: files } = await supabase.storage.from(BUCKET).list(prefix, { limit: 100 });
+      if (!files || files.length === 0) return;
+      const { data: rows } = await supabase
+        .from('service_images')
+        .select('storage_path')
+        .eq('service_id', serviceId);
+      const known = new Set((rows || []).map((r: any) => r.storage_path).filter(Boolean));
+      const orphans = files
+        .map((f) => `${prefix}/${f.name}`)
+        .filter((p) => !known.has(p));
+      if (orphans.length > 0) {
+        await supabase.storage.from(BUCKET).remove(orphans);
+        console.info('[ServiceImages] órfãos removidos', { serviceId, count: orphans.length });
+      }
+    } catch (err) {
+      console.warn('[ServiceImages] cleanupOrphans falhou', err);
+    }
+  }, [serviceId, userId]);
+
+  /* Upload pipeline: compress → upload (com re-tentativa) → DB row */
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesIn = e.target.files;
     if (!filesIn || filesIn.length === 0) return;
@@ -158,42 +183,77 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
 
     let uploadedCount = 0;
     let failedCount = 0;
+    let lastFailureKind: UploadErrorKind | null = null;
+    const startedAt = performance.now();
+
+    /** Re-tenta uma etapa até 3 vezes com backoff, ignorando erros permanentes. */
+    const withRetry = async <T,>(stage: UploadStage, fileName: string, fn: () => Promise<T>): Promise<T> => {
+      let lastErr: unknown;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          return await fn();
+        } catch (err) {
+          lastErr = err;
+          const kind = classifyUploadError(err);
+          console.warn('[ServiceImages] etapa falhou', { stage, fileName, attempt, kind, serviceId });
+          if (kind === 'validation' || kind === 'aborted' || attempt === 3) break;
+          await new Promise((r) => setTimeout(r, 400 * attempt * attempt));
+          if (attempt === 1) toast.message(`Reenviando ${fileName}…`, { description: 'Conexão instável, tentando de novo.' });
+        }
+      }
+      throw lastErr;
+    };
+
     try {
       for (let i = 0; i < files.length; i++) {
         setProgress({ current: i + 1, total: files.length });
         const raw = files[i];
         if (raw.size > 10 * 1024 * 1024) {
-          toast.error(`${raw.name} excede 10MB`);
+          toast.error(`${raw.name} excede 10MB`, { description: 'Reduza a foto ou escolha outra imagem menor.' });
           failedCount++;
+          lastFailureKind = 'validation';
           continue;
         }
 
         if (!raw.type.startsWith('image/')) {
-          toast.error(`${raw.name} não é uma imagem válida`);
+          toast.error(`${raw.name} não é uma imagem válida`, { description: 'Use fotos em JPG, PNG ou WebP.' });
           failedCount++;
+          lastFailureKind = 'validation';
           continue;
         }
 
         let compressed;
         try {
-          compressed = await compressToWebP(raw, { maxWidth: 1600, quality: 0.82 });
-        } catch (err: any) {
-          toast.error(`Falha ao processar ${raw.name}: ${err.message}`);
+          compressed = await withRetry('compress', raw.name, () =>
+            compressToWebP(raw, { maxWidth: 1600, quality: 0.82 }),
+          );
+        } catch (err) {
+          const kind = classifyUploadError(err);
+          lastFailureKind = kind;
+          recordStageTelemetry({ stage: 'compress', success: false, latencyMs: performance.now() - startedAt, fileSizeBytes: raw.size, errorKind: kind, errorCode: (err as any)?.message?.slice(0, 200) });
+          toast.error(`Não foi possível preparar ${raw.name}`, { description: userMessageFor(kind) });
           failedCount++;
           continue;
         }
 
         const storagePath = `${userId}/${serviceId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(storagePath, compressed.file, {
-            contentType: compressed.file.type,
-            cacheControl: '31536000',
-            upsert: false,
+        try {
+          await withRetry('upload', raw.name, async () => {
+            const { error: upErr } = await supabase.storage
+              .from(BUCKET)
+              .upload(storagePath, compressed!.file, {
+                contentType: compressed!.file.type,
+                cacheControl: '31536000',
+                upsert: true,
+              });
+            if (upErr) throw upErr;
           });
-
-        if (upErr) {
-          toast.error(`Não foi possível enviar ${raw.name}. Tente novamente.`);
+        } catch (err) {
+          const kind = classifyUploadError(err);
+          lastFailureKind = kind;
+          await supabase.storage.from(BUCKET).remove([storagePath]).catch(() => undefined);
+          recordStageTelemetry({ stage: 'upload', success: false, latencyMs: performance.now() - startedAt, fileSizeBytes: compressed.finalSize, errorKind: kind, errorCode: (err as any)?.message?.slice(0, 200) });
+          toast.error(`Não foi possível enviar ${raw.name}`, { description: userMessageFor(kind) });
           failedCount++;
           continue;
         }
@@ -201,22 +261,30 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
         const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
 
         const isCover = noCoverYet && i === 0;
-        const { error: insErr } = await supabase.from('service_images').insert({
-          service_id: serviceId,
-          image_url: pub.publicUrl,
-          display_order: nextOrder,
-          is_cover: isCover,
-          storage_path: storagePath,
-        } as any);
-        if (insErr) {
-          // Avoid leaving a file in storage when its database row failed.
-          await supabase.storage.from(BUCKET).remove([storagePath]);
-          toast.error(`Não foi possível salvar ${raw.name}. Tente novamente.`);
+        try {
+          await withRetry('upload', raw.name, async () => {
+            const { error: insErr } = await supabase.from('service_images').insert({
+              service_id: serviceId,
+              image_url: pub.publicUrl,
+              display_order: nextOrder,
+              is_cover: isCover,
+              storage_path: storagePath,
+            } as any);
+            if (insErr) throw insErr;
+          });
+        } catch (err) {
+          const kind = classifyUploadError(err);
+          lastFailureKind = kind;
+          // Nunca deixe arquivo órfão quando a linha do banco falhar.
+          await supabase.storage.from(BUCKET).remove([storagePath]).catch(() => undefined);
+          console.error('[ServiceImages] insert falhou', { serviceId, fileName: raw.name, kind, message: (err as any)?.message });
+          toast.error(`Não foi possível salvar ${raw.name}`, { description: userMessageFor(kind) });
           failedCount++;
           continue;
         }
         nextOrder++;
         uploadedCount++;
+        recordStageTelemetry({ stage: 'upload', success: true, latencyMs: performance.now() - startedAt, fileSizeBytes: compressed.finalSize });
 
         if (compressed.savingsPercent > 0) {
           const orig = (compressed.originalSize / 1024).toFixed(0);
@@ -225,20 +293,30 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
         }
       }
 
+      await cleanupOrphans();
       if (!mountedRef.current) return;
       await fetchImages();
-      if (uploadedCount > 0) {
+      if (uploadedCount > 0 && failedCount === 0) {
         setStatus({
           kind: 'success',
           message: `${uploadedCount} foto${uploadedCount === 1 ? '' : 's'} enviada${uploadedCount === 1 ? '' : 's'} com sucesso.`,
         });
+      } else if (uploadedCount > 0) {
+        setStatus({
+          kind: 'error',
+          message: `${uploadedCount} foto(s) enviada(s) e ${failedCount} falharam. ${lastFailureKind ? userMessageFor(lastFailureKind) : 'Toque em "Adicionar" para tentar de novo.'}`,
+        });
       } else if (failedCount > 0) {
-        setStatus({ kind: 'error', message: 'Nenhuma foto foi enviada. Confira os arquivos e tente novamente.' });
+        setStatus({
+          kind: 'error',
+          message: `Nenhuma foto foi enviada. ${lastFailureKind ? userMessageFor(lastFailureKind) : 'Confira os arquivos e tente novamente.'}`,
+        });
       }
     } catch (error) {
       console.error('[ServiceImageDragUploader] upload failed', error);
+      await cleanupOrphans();
       if (mountedRef.current) {
-        setStatus({ kind: 'error', message: 'O envio foi interrompido. Suas fotos salvas continuam seguras; tente novamente.' });
+        setStatus({ kind: 'error', message: 'O envio foi interrompido. Suas fotos salvas continuam seguras; toque em "Adicionar" para tentar de novo.' });
       }
     } finally {
       onUploadingChange?.(false);
