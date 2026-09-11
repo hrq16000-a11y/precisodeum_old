@@ -23,6 +23,7 @@ import { calculateDistanceKm } from '@/lib/geoDistance';
 import { importWithRetry } from '@/lib/lazyWithRetry';
 import CitySeoBlock from '@/components/CitySeoBlock';
 import { formatCityState } from '@/lib/locationFormat';
+import { buildCityEditorial } from '@/lib/serviceCityEditorial';
 
 const SponsorLeaderBanner = lazy(() => importWithRetry(() => import('@/components/sponsors/SponsorLeaderBanner')));
 const SponsorTopBanner = lazy(() => importWithRetry(() => import('@/components/sponsors/SponsorTopBanner')));
@@ -196,6 +197,24 @@ const CityPage = () => {
       return compareCityMerit(a, b);
     });
   }, [rawProviders, userLat, userLon, city]);
+
+  // Conteúdo editorial regional (determinístico por cidade, sem IA).
+  const cityEditorial = useMemo(() => {
+    if (!city) return [];
+    const hoods = [...new Set(
+      providers.map((p: any) => String(p.neighborhood || '').trim()).filter(Boolean)
+    )].slice(0, 6);
+    return buildCityEditorial({
+      verticalSlug: 'servicos-gerais',
+      verticalLabel: 'Serviços',
+      inlineLabel: 'um profissional de serviços',
+      citySlug: city.slug,
+      cityLabel: city.name,
+      state: city.state,
+      providerCount: providers.length,
+      neighborhoodLabels: hoods,
+    });
+  }, [city, providers]);
 
   const citySocialImage = providers.find((provider) => provider.photo)?.photo;
 
@@ -401,6 +420,20 @@ const CityPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Conteúdo editorial por região (determinístico, sem IA) */}
+      {cityEditorial.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="grid gap-6 md:grid-cols-2">
+            {cityEditorial.map((block) => (
+              <article key={block.title} className="rounded-xl border bg-card p-5">
+                <h2 className="text-lg font-semibold text-foreground">{block.title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{block.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* SEO programático: texto único, FAQ JSON-LD, categorias mais buscadas, vizinhas e destaques */}
       <CitySeoBlock

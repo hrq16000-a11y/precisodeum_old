@@ -210,10 +210,28 @@ ${entries.join('\n')}
   }
 
   if (type === 'cities') {
+    // Gate da cidade: a landing /cidade/:slug lista PROFISSIONAIS (não serviços)
+    // e traz bloco editorial próprio, então basta >= 1 provider aprovado.
+    // O gate estrito por serviço continua valendo para providers/categorias.
+    const norm = (v: string) =>
+      String(v || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const cityNamesWithProviders = new Set<string>();
+    {
+      const { data: provCities } = await supabase
+        .from('providers')
+        .select('city')
+        .eq('status', 'approved')
+        .not('city', 'is', null);
+      for (const row of provCities || []) {
+        const n = norm((row as { city: string }).city);
+        if (n) cityNamesWithProviders.add(n);
+      }
+      for (const n of eligibleCityNames) cityNamesWithProviders.add(norm(n));
+    }
     const { data } = await supabase.from('cities').select('slug, name, created_at').range(offset, offset + limit - 1);
     for (const city of data || []) {
-      const norm = String(city.name || city.slug || '').trim().toLowerCase();
-      if (!eligibleCityNames.has(norm)) continue; // gate
+      const key = norm(city.name || city.slug || '');
+      if (!cityNamesWithProviders.has(key)) continue; // gate
       urls += entry(siteUrl, `/cidade/${city.slug}`, fmtDate(city.created_at), 'weekly', '0.8');
     }
   }
