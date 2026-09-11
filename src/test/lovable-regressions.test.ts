@@ -9,7 +9,13 @@ describe('Lovable regressions', () => {
   it('uses the public sponsor projection and accent-insensitive neighborhood matching', () => {
     expect(fs.readFileSync('src/hooks/useSponsors.ts', 'utf8')).toContain("sponsors_public' as any");
     expect(fs.readFileSync('src/components/ads/AdSlot.tsx', 'utf8')).toContain("sponsors_public' as any");
+    expect(fs.readFileSync('src/pages/SponsorPublicPage.tsx', 'utf8')).toContain(".from('sponsors_public')");
     expect(fs.readFileSync('src/pages/SeoPage.tsx', 'utf8')).toContain('normalizeLocation');
+  });
+  it('registers notifications through one realtime callback before subscribing', () => {
+    const source = fs.readFileSync('src/hooks/useNotifications.ts', 'utf8');
+    expect(source).toContain("event: '*'");
+    expect(source.match(/\.on\('postgres_changes'/g)).toHaveLength(1);
   });
   it('registers onboarding realtime handlers only through the shared channel registry', () => {
     const source = fs.readFileSync('src/hooks/useOnboardingStatus.ts', 'utf8');
