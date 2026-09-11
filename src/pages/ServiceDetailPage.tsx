@@ -19,6 +19,7 @@ import { formatLocationString } from '@/lib/normalize';
 import { formatCityState } from '@/lib/locationFormat';
 import { SERVICE_PUBLIC_COLUMNS } from '@/lib/dbSafeColumns';
 import { fetchProviderContact } from '@/lib/providerContact';
+import { trackWhatsAppClick } from '@/lib/tracking';
 
 const ServiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
