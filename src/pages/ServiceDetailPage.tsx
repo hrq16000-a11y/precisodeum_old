@@ -19,6 +19,7 @@ import { formatLocationString } from '@/lib/normalize';
 import { formatCityState } from '@/lib/locationFormat';
 import { SERVICE_PUBLIC_COLUMNS } from '@/lib/dbSafeColumns';
 import { fetchProviderContact } from '@/lib/providerContact';
+import { trackWhatsAppClick } from '@/lib/tracking';
 
 const ServiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,13 +55,26 @@ const ServiceDetailPage = () => {
 
   // Contato protegido: revelado sob demanda via RPC (ver src/lib/providerContact.ts).
   const [revealedWhatsapp, setRevealedWhatsapp] = useState('');
+  const trackAdWhatsapp = () => {
+    const providerId = svc?.provider?.id;
+    if (!providerId) return;
+    trackWhatsAppClick(providerId, svc?.provider?.slug || providerId, 'service_ad', svc?.id, {
+      city: svc?.provider?.city || '',
+      neighborhood: svc?.provider?.neighborhood || '',
+      category: catInfo?.name || svc?.service_name || '',
+    });
+  };
   const handleRevealWhatsapp = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (revealedWhatsapp) return;
+    if (revealedWhatsapp) {
+      trackAdWhatsapp();
+      return;
+    }
     e.preventDefault();
     const contact = await fetchProviderContact(svc?.provider?.id);
     const number = contact.whatsapp || contact.phone;
     if (!number) return;
     setRevealedWhatsapp(number);
+    trackAdWhatsapp();
     window.open(
       whatsappLink(number, buildSmartMessage(providerName, catInfo?.name || svc?.service_name || '', userCity, userState)),
       '_blank',

@@ -846,7 +846,8 @@ export const OnboardingV2Shell = ({ internalHandoffFromTriage = false, seedState
           const fullName = (p.full_name || '').trim();
           // Front-end sync: garante business_name preenchido sem depender só do trigger DB.
           const businessName = (existing[0].business_name && String(existing[0].business_name).trim()) || fullName;
-          const legalName = (existing[0].legal_name && String(existing[0].legal_name).trim()) || fullName;
+          // legal_name não é mais legível (coluna sensível revogada); usa nome informado.
+          const legalName = fullName || businessName;
           const updPayload = normalizeProviderPayload({
             city: p.city || existing[0].city || '',
             state: p.state || existing[0].state || '',
