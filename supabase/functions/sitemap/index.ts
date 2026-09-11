@@ -213,8 +213,11 @@ ${entries.join('\n')}
     // Gate da cidade: a landing /cidade/:slug lista PROFISSIONAIS (não serviços)
     // e traz bloco editorial próprio, então basta >= 1 provider aprovado.
     // O gate estrito por serviço continua valendo para providers/categorias.
+    // Normalização tolerante: ignora acentos, hífens e pontuação
+    // ("Itapecuru-Mirim" === "Itapecuru Mirim").
     const norm = (v: string) =>
-      String(v || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      String(v || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     const cityNamesWithProviders = new Set<string>();
     {
       const { data: provCities } = await supabase
@@ -247,7 +250,7 @@ ${entries.join('\n')}
       .not('city', 'is', null)
       .not('neighborhood', 'is', null);
     const { data: citiesData } = await supabase.from('cities').select('slug, name');
-    const normalize = (value: string) => String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const normalize = (value: string) => String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     const citySlugByNorm = new Map<string, string>();
     for (const c of citiesData || []) {
       const norm = normalize(c.name || c.slug || '');
@@ -294,7 +297,8 @@ ${entries.join('\n')}
     for (const c of cats || []) catIdToSlug.set(c.id, c.slug);
 
     const normalizeTxt = (value: string) =>
-      String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ').trim();
     const slugifyTxt = (value: string) =>
       normalizeTxt(value).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const citySlugByNormName = new Map<string, string>();
