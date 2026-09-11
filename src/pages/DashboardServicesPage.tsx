@@ -1456,15 +1456,15 @@ const DashboardServicesPage = () => {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">Redes Sociais</label>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">📸</span>
-                    <input name="instagram_url" value={form.instagram_url} onChange={handleChange} placeholder="https://instagram.com/seu_perfil" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
+                    <Instagram className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <input name="instagram_url" value={form.instagram_url} onChange={handleChange} placeholder="https://instagram.com/seu_perfil" aria-label="Instagram" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">📘</span>
-                    <input name="facebook_url" value={form.facebook_url} onChange={handleChange} placeholder="https://facebook.com/sua_pagina" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
+                    <Facebook className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <input name="facebook_url" value={form.facebook_url} onChange={handleChange} placeholder="https://facebook.com/sua_pagina" aria-label="Facebook" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">🎬</span>
+                    <Youtube className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     <input name="youtube_url" value={form.youtube_url} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent outline-hidden" />
                   </div>
                 </div>
