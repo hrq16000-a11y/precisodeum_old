@@ -198,6 +198,24 @@ const CityPage = () => {
     });
   }, [rawProviders, userLat, userLon, city]);
 
+  // Conteúdo editorial regional (determinístico por cidade, sem IA).
+  const cityEditorial = useMemo(() => {
+    if (!city) return [];
+    const hoods = [...new Set(
+      providers.map((p: any) => String(p.neighborhood || '').trim()).filter(Boolean)
+    )].slice(0, 6);
+    return buildCityEditorial({
+      verticalSlug: 'servicos-gerais',
+      verticalLabel: 'Serviços',
+      inlineLabel: 'um profissional de serviços',
+      citySlug: city.slug,
+      cityLabel: city.name,
+      state: city.state,
+      providerCount: providers.length,
+      neighborhoodLabels: hoods,
+    });
+  }, [city, providers]);
+
   const citySocialImage = providers.find((provider) => provider.photo)?.photo;
 
   useSeoHead({
