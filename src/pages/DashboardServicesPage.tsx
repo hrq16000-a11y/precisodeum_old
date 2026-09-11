@@ -1743,7 +1743,11 @@ const DashboardServicesPage = () => {
                             : ''
                       }
                     >
-                      {isSubmitting ? '⏳ Salvando...' : `📢 ${editId ? 'Salvar' : 'Publicar'}`}
+                      {isSubmitting ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Salvando...</>
+                      ) : (
+                        <><Megaphone className="h-4 w-4" aria-hidden="true" /> {editId ? 'Salvar' : 'Publicar'}</>
+                      )}
                     </Button>
                   );
                 })()}
