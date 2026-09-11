@@ -118,6 +118,7 @@ import { Route as AdminPaginasRouteImport } from './routes/admin/paginas'
 import { Route as AdminPerfisOrfaosRouteImport } from './routes/admin/perfis-orfaos'
 import { Route as AdminPermissoesRouteImport } from './routes/admin/permissoes'
 import { Route as AdminPrestadoresRouteImport } from './routes/admin/prestadores'
+import { Route as AdminProfissionaisRouteImport } from './routes/admin/profissionais'
 import { Route as AdminProviderConversionRouteImport } from './routes/admin/provider-conversion'
 import { Route as AdminPwaRouteImport } from './routes/admin/pwa'
 import { Route as AdminRankingsRouteImport } from './routes/admin/rankings'
@@ -787,6 +788,11 @@ const AdminPermissoesRoute = AdminPermissoesRouteImport.update({
 const AdminPrestadoresRoute = AdminPrestadoresRouteImport.update({
   id: '/admin/prestadores',
   path: '/admin/prestadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProfissionaisRoute = AdminProfissionaisRouteImport.update({
+  id: '/admin/profissionais',
+  path: '/admin/profissionais',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminProviderConversionRoute = AdminProviderConversionRouteImport.update({
@@ -1509,6 +1515,7 @@ export interface FileRoutesByFullPath {
   '/admin/perfis-orfaos': typeof AdminPerfisOrfaosRoute
   '/admin/permissoes': typeof AdminPermissoesRoute
   '/admin/prestadores': typeof AdminPrestadoresRoute
+  '/admin/profissionais': typeof AdminProfissionaisRoute
   '/admin/provider-conversion': typeof AdminProviderConversionRoute
   '/admin/pwa': typeof AdminPwaRoute
   '/admin/rankings': typeof AdminRankingsRoute
@@ -1739,6 +1746,7 @@ export interface FileRoutesByTo {
   '/admin/perfis-orfaos': typeof AdminPerfisOrfaosRoute
   '/admin/permissoes': typeof AdminPermissoesRoute
   '/admin/prestadores': typeof AdminPrestadoresRoute
+  '/admin/profissionais': typeof AdminProfissionaisRoute
   '/admin/provider-conversion': typeof AdminProviderConversionRoute
   '/admin/pwa': typeof AdminPwaRoute
   '/admin/rankings': typeof AdminRankingsRoute
@@ -1969,6 +1977,7 @@ export interface FileRoutesById {
   '/admin/perfis-orfaos': typeof AdminPerfisOrfaosRoute
   '/admin/permissoes': typeof AdminPermissoesRoute
   '/admin/prestadores': typeof AdminPrestadoresRoute
+  '/admin/profissionais': typeof AdminProfissionaisRoute
   '/admin/provider-conversion': typeof AdminProviderConversionRoute
   '/admin/pwa': typeof AdminPwaRoute
   '/admin/rankings': typeof AdminRankingsRoute
@@ -2201,6 +2210,7 @@ export interface FileRouteTypes {
     | '/admin/perfis-orfaos'
     | '/admin/permissoes'
     | '/admin/prestadores'
+    | '/admin/profissionais'
     | '/admin/provider-conversion'
     | '/admin/pwa'
     | '/admin/rankings'
@@ -2431,6 +2441,7 @@ export interface FileRouteTypes {
     | '/admin/perfis-orfaos'
     | '/admin/permissoes'
     | '/admin/prestadores'
+    | '/admin/profissionais'
     | '/admin/provider-conversion'
     | '/admin/pwa'
     | '/admin/rankings'
@@ -2660,6 +2671,7 @@ export interface FileRouteTypes {
     | '/admin/perfis-orfaos'
     | '/admin/permissoes'
     | '/admin/prestadores'
+    | '/admin/profissionais'
     | '/admin/provider-conversion'
     | '/admin/pwa'
     | '/admin/rankings'
@@ -2891,6 +2903,7 @@ export interface RootRouteChildren {
   AdminPerfisOrfaosRoute: typeof AdminPerfisOrfaosRoute
   AdminPermissoesRoute: typeof AdminPermissoesRoute
   AdminPrestadoresRoute: typeof AdminPrestadoresRoute
+  AdminProfissionaisRoute: typeof AdminProfissionaisRoute
   AdminProviderConversionRoute: typeof AdminProviderConversionRoute
   AdminPwaRoute: typeof AdminPwaRoute
   AdminRankingsRoute: typeof AdminRankingsRoute
@@ -3775,6 +3788,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/prestadores'
       fullPath: '/admin/prestadores'
       preLoaderRoute: typeof AdminPrestadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/profissionais': {
+      id: '/admin/profissionais'
+      path: '/admin/profissionais'
+      fullPath: '/admin/profissionais'
+      preLoaderRoute: typeof AdminProfissionaisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/provider-conversion': {
@@ -4735,6 +4755,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPerfisOrfaosRoute: AdminPerfisOrfaosRoute,
   AdminPermissoesRoute: AdminPermissoesRoute,
   AdminPrestadoresRoute: AdminPrestadoresRoute,
+  AdminProfissionaisRoute: AdminProfissionaisRoute,
   AdminProviderConversionRoute: AdminProviderConversionRoute,
   AdminPwaRoute: AdminPwaRoute,
   AdminRankingsRoute: AdminRankingsRoute,
