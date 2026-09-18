@@ -150,9 +150,20 @@ const ServiceImageDragUploader = ({ serviceId, userId, maxPhotos = MAX_DEFAULT, 
       if (!files || files.length === 0) return;
       const { data: rows } = await supabase
         .from('service_images')
-        .select('storage_path')
+        .select('storage_path, image_url')
         .eq('service_id', serviceId);
-      const known = new Set((rows || []).map((r: any) => r.storage_path).filter(Boolean));
+      // Fotos antigas (wizard/legado) não gravam storage_path — nesse caso o
+      // vínculo é feito pelo nome do arquivo presente na image_url pública.
+      const known = new Set<string>();
+      for (const r of (rows || []) as any[]) {
+        if (r.storage_path) known.add(String(r.storage_path));
+        if (r.image_url) {
+          try {
+            const name = decodeURIComponent(String(r.image_url).split('?')[0].split('/').pop() || '');
+            if (name) known.add(`${prefix}/${name}`);
+          } catch { /* url malformada: ignora */ }
+        }
+      }
       const orphans = files
         .map((f) => `${prefix}/${f.name}`)
         .filter((p) => !known.has(p));
