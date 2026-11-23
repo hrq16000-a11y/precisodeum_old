@@ -1,5 +1,15 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Rodada 2 — homologação (2026-11-23)
+
+- [x] Consultar o scan profundo existente, sem iniciar outro.
+- [ ] Recuperar oito IDs históricos exatos (bloqueio: scan atual não retorna achados resolvidos; relatos antigos contraditórios).
+- [x] Conferir controles ativos e abertura das cinco telas em 390px e 1440px.
+- [x] Executar aprovação e aplicação com registros descartáveis locais; registrar falhas e limites.
+- [x] Entregar relatório NO-GO com evidências de produção, sem nova publicação.
+- [ ] Homologar fluxos completos (bloqueios: auditoria detalhada ambígua, auditoria de sugestões ausente, payload proibido aprovado).
+- [ ] Confirmar SHA público (bloqueio: domínio só apresenta deployment ID, sem vínculo verificável com commit).
+
 ## Incidente de estabilidade — 2026-09-02
 
 - [x] Correlacionar códigos da tela fatal com `error_reports` e logs publicados.

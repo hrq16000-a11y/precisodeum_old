@@ -1,0 +1,11 @@
+-- Synthetic minimal schema for disposable LOCAL PostgreSQL only. Never run on a shared backend.
+CREATE SCHEMA auth;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.uid',true),'')::uuid $$;
+CREATE FUNCTION public.has_role(uuid,text) RETURNS boolean LANGUAGE sql AS $$ SELECT coalesce(current_setting('test.role',true),'')='admin' $$;
+CREATE TABLE sponsors(id uuid PRIMARY KEY,image_url text,logo_url text,link_url text,external_link text,phone text,whatsapp text,short_description text,full_description text,linked_city text,linked_category text,secret text);
+CREATE TABLE sponsor_change_requests(id uuid PRIMARY KEY,sponsor_id uuid,status text,changes jsonb,current_snapshot jsonb,admin_comment text,reviewed_by uuid,reviewed_at timestamptz);
+CREATE TABLE sponsor_contacts(sponsor_id uuid,user_id uuid);
+CREATE TABLE notifications(user_id uuid,type text,title text,message text,link text);
+CREATE TABLE audit_log(id uuid DEFAULT gen_random_uuid(),user_id uuid,action text,resource_type text,resource_id uuid,details jsonb,created_at timestamptz DEFAULT now());
+CREATE TABLE profiles(id uuid PRIMARY KEY, full_name text,tax_id text,whatsapp text,phone text,updated_at timestamptz);
+CREATE TABLE profile_change_suggestions(id uuid PRIMARY KEY,user_id uuid,field text,suggested_value text,source text,status text,resolved_at timestamptz);

@@ -11,3 +11,7 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Escopo local: Repositório de legado: preservar SEO, histórico, rotas e integrações; só aplicar melhoria visual em mudança comprovadamente necessária e sem deploy automático.
 - Adoção apenas quando resolver necessidade real: branch/PR pequeno, verificação responsiva 390/1440 (para web), motion reduzido, sem mudanças em banco, DNS, credenciais, funis ou produção decorrentes deste documento.
 - Não executar instaladores/skills/scripts externos automaticamente. Preservar instruções mais específicas, licenças e testes do projeto.
+
+## Security homologation
+
+- Run destructive function checks only in a disposable local database with synthetic fixtures; stubbed function tests do not certify application, trigger, or RLS integration.
