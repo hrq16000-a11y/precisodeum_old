@@ -61,6 +61,7 @@ import { Route as AdminCaixaNotificacoesRouteImport } from './routes/admin/caixa
 import { Route as AdminCategoriasRouteImport } from './routes/admin/categorias'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
 import { Route as AdminCidadesRouteImport } from './routes/admin/cidades'
+import { Route as AdminCliquesAnunciosRouteImport } from './routes/admin/cliques-anuncios'
 import { Route as AdminCoberturaRouteImport } from './routes/admin/cobertura'
 import { Route as AdminComoFuncionaRouteImport } from './routes/admin/como-funciona'
 import { Route as AdminComunidadeRouteImport } from './routes/admin/comunidade'
@@ -83,6 +84,7 @@ import { Route as AdminErrosRouteImport } from './routes/admin/erros'
 import { Route as AdminErros500RouteImport } from './routes/admin/erros-500'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
 import { Route as AdminFaqRouteImport } from './routes/admin/faq'
+import { Route as AdminFotosRouteImport } from './routes/admin/fotos'
 import { Route as AdminFunilCadastroRouteImport } from './routes/admin/funil-cadastro'
 import { Route as AdminFunilHealthRouteImport } from './routes/admin/funil-health'
 import { Route as AdminFunilPublicoRouteImport } from './routes/admin/funil-publico'
@@ -500,6 +502,11 @@ const AdminCidadesRoute = AdminCidadesRouteImport.update({
   path: '/admin/cidades',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCliquesAnunciosRoute = AdminCliquesAnunciosRouteImport.update({
+  id: '/admin/cliques-anuncios',
+  path: '/admin/cliques-anuncios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCoberturaRoute = AdminCoberturaRouteImport.update({
   id: '/admin/cobertura',
   path: '/admin/cobertura',
@@ -609,6 +616,11 @@ const AdminEstatisticasRoute = AdminEstatisticasRouteImport.update({
 const AdminFaqRoute = AdminFaqRouteImport.update({
   id: '/admin/faq',
   path: '/admin/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFotosRoute = AdminFotosRouteImport.update({
+  id: '/admin/fotos',
+  path: '/admin/fotos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFunilCadastroRoute = AdminFunilCadastroRouteImport.update({
@@ -1458,6 +1470,7 @@ export interface FileRoutesByFullPath {
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/cidades': typeof AdminCidadesRoute
+  '/admin/cliques-anuncios': typeof AdminCliquesAnunciosRoute
   '/admin/cobertura': typeof AdminCoberturaRoute
   '/admin/como-funciona': typeof AdminComoFuncionaRoute
   '/admin/comunidade': typeof AdminComunidadeRoute
@@ -1480,6 +1493,7 @@ export interface FileRoutesByFullPath {
   '/admin/erros-500': typeof AdminErros500Route
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/faq': typeof AdminFaqRoute
+  '/admin/fotos': typeof AdminFotosRoute
   '/admin/funil-cadastro': typeof AdminFunilCadastroRoute
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
@@ -1689,6 +1703,7 @@ export interface FileRoutesByTo {
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/cidades': typeof AdminCidadesRoute
+  '/admin/cliques-anuncios': typeof AdminCliquesAnunciosRoute
   '/admin/cobertura': typeof AdminCoberturaRoute
   '/admin/como-funciona': typeof AdminComoFuncionaRoute
   '/admin/comunidade': typeof AdminComunidadeRoute
@@ -1711,6 +1726,7 @@ export interface FileRoutesByTo {
   '/admin/erros-500': typeof AdminErros500Route
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/faq': typeof AdminFaqRoute
+  '/admin/fotos': typeof AdminFotosRoute
   '/admin/funil-cadastro': typeof AdminFunilCadastroRoute
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
@@ -1920,6 +1936,7 @@ export interface FileRoutesById {
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/cidades': typeof AdminCidadesRoute
+  '/admin/cliques-anuncios': typeof AdminCliquesAnunciosRoute
   '/admin/cobertura': typeof AdminCoberturaRoute
   '/admin/como-funciona': typeof AdminComoFuncionaRoute
   '/admin/comunidade': typeof AdminComunidadeRoute
@@ -1942,6 +1959,7 @@ export interface FileRoutesById {
   '/admin/erros-500': typeof AdminErros500Route
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/faq': typeof AdminFaqRoute
+  '/admin/fotos': typeof AdminFotosRoute
   '/admin/funil-cadastro': typeof AdminFunilCadastroRoute
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
@@ -2153,6 +2171,7 @@ export interface FileRouteTypes {
     | '/admin/categorias'
     | '/admin/chat'
     | '/admin/cidades'
+    | '/admin/cliques-anuncios'
     | '/admin/cobertura'
     | '/admin/como-funciona'
     | '/admin/comunidade'
@@ -2175,6 +2194,7 @@ export interface FileRouteTypes {
     | '/admin/erros-500'
     | '/admin/estatisticas'
     | '/admin/faq'
+    | '/admin/fotos'
     | '/admin/funil-cadastro'
     | '/admin/funil-health'
     | '/admin/funil-publico'
@@ -2384,6 +2404,7 @@ export interface FileRouteTypes {
     | '/admin/categorias'
     | '/admin/chat'
     | '/admin/cidades'
+    | '/admin/cliques-anuncios'
     | '/admin/cobertura'
     | '/admin/como-funciona'
     | '/admin/comunidade'
@@ -2406,6 +2427,7 @@ export interface FileRouteTypes {
     | '/admin/erros-500'
     | '/admin/estatisticas'
     | '/admin/faq'
+    | '/admin/fotos'
     | '/admin/funil-cadastro'
     | '/admin/funil-health'
     | '/admin/funil-publico'
@@ -2614,6 +2636,7 @@ export interface FileRouteTypes {
     | '/admin/categorias'
     | '/admin/chat'
     | '/admin/cidades'
+    | '/admin/cliques-anuncios'
     | '/admin/cobertura'
     | '/admin/como-funciona'
     | '/admin/comunidade'
@@ -2636,6 +2659,7 @@ export interface FileRouteTypes {
     | '/admin/erros-500'
     | '/admin/estatisticas'
     | '/admin/faq'
+    | '/admin/fotos'
     | '/admin/funil-cadastro'
     | '/admin/funil-health'
     | '/admin/funil-publico'
@@ -2846,6 +2870,7 @@ export interface RootRouteChildren {
   AdminCategoriasRoute: typeof AdminCategoriasRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminCidadesRoute: typeof AdminCidadesRoute
+  AdminCliquesAnunciosRoute: typeof AdminCliquesAnunciosRoute
   AdminCoberturaRoute: typeof AdminCoberturaRoute
   AdminComoFuncionaRoute: typeof AdminComoFuncionaRoute
   AdminComunidadeRoute: typeof AdminComunidadeRoute
@@ -2868,6 +2893,7 @@ export interface RootRouteChildren {
   AdminErros500Route: typeof AdminErros500Route
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
   AdminFaqRoute: typeof AdminFaqRoute
+  AdminFotosRoute: typeof AdminFotosRoute
   AdminFunilCadastroRoute: typeof AdminFunilCadastroRoute
   AdminFunilHealthRoute: typeof AdminFunilHealthRoute
   AdminFunilPublicoRoute: typeof AdminFunilPublicoRoute
@@ -3391,6 +3417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCidadesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/cliques-anuncios': {
+      id: '/admin/cliques-anuncios'
+      path: '/admin/cliques-anuncios'
+      fullPath: '/admin/cliques-anuncios'
+      preLoaderRoute: typeof AdminCliquesAnunciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/cobertura': {
       id: '/admin/cobertura'
       path: '/admin/cobertura'
@@ -3543,6 +3576,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/faq'
       fullPath: '/admin/faq'
       preLoaderRoute: typeof AdminFaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/fotos': {
+      id: '/admin/fotos'
+      path: '/admin/fotos'
+      fullPath: '/admin/fotos'
+      preLoaderRoute: typeof AdminFotosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/funil-cadastro': {
@@ -4698,6 +4738,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCategoriasRoute: AdminCategoriasRoute,
   AdminChatRoute: AdminChatRoute,
   AdminCidadesRoute: AdminCidadesRoute,
+  AdminCliquesAnunciosRoute: AdminCliquesAnunciosRoute,
   AdminCoberturaRoute: AdminCoberturaRoute,
   AdminComoFuncionaRoute: AdminComoFuncionaRoute,
   AdminComunidadeRoute: AdminComunidadeRoute,
@@ -4720,6 +4761,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminErros500Route: AdminErros500Route,
   AdminEstatisticasRoute: AdminEstatisticasRoute,
   AdminFaqRoute: AdminFaqRoute,
+  AdminFotosRoute: AdminFotosRoute,
   AdminFunilCadastroRoute: AdminFunilCadastroRoute,
   AdminFunilHealthRoute: AdminFunilHealthRoute,
   AdminFunilPublicoRoute: AdminFunilPublicoRoute,
