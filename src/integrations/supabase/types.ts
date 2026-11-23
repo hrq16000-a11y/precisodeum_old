@@ -12089,6 +12089,7 @@ export type Database = {
       }
       user_lead_quota: { Args: { _user_id: string }; Returns: number }
       user_lead_quota_usage: { Args: { _user_id: string }; Returns: Json }
+      user_level_in_use: { Args: { _level_id: string }; Returns: boolean }
       validate_db_health: { Args: never; Returns: Json }
       wa_encode_text: { Args: { _t: string }; Returns: string }
     }

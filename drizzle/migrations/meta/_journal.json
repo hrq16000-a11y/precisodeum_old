@@ -8,6 +8,13 @@
       "when": 1795471171520,
       "tag": "0000_harden_definer_functions_and_activity_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795471657875,
+      "tag": "0001_replace_open_read_policies",
+      "breakpoints": true
     }
   ]
 }
