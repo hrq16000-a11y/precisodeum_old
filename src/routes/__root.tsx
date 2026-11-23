@@ -171,7 +171,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function RootErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function RootErrorComponent({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     console.error("[__root errorComponent]", error);
