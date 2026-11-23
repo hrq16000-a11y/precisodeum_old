@@ -15,6 +15,13 @@
       "when": 1795471657875,
       "tag": "0001_replace_open_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795472265687,
+      "tag": "0002_remove_dynamic_sql_from_definer_functions",
+      "breakpoints": true
     }
   ]
 }
