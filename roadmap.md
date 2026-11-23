@@ -1,5 +1,12 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Desktop/mobile security-flow recheck (2026-11-23)
+
+- [x] Recheck authenticated sponsor requests, profile suggestions, and audit report at 390px/1440px.
+- [x] Repeat disposable local function tests without changing real accounts (six groups pass; two criteria fail).
+- [x] Record results and distinguish layout checks from end-to-end approval verification in docs/security/desktop-mobile-flow-recheck-2026-11-23.md.
+- [ ] Certify populated UI approval/application (blocked by empty real queues, incomplete disposable backend, and the three known function failures).
+
 ## Rodada 2 — homologação (2026-11-23)
 
 - [x] Consultar o scan profundo existente, sem iniciar outro.
