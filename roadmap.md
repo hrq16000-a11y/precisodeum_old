@@ -1,5 +1,14 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Roteiro 360° — Rodada 2A (2026-11-24)
+
+- [x] Identificar ausência de Docker/socket e preparar alternativa no GitHub Actions com cópia temporária de migrations/seed, rede interna e cleanup; configuração validada com CLI 2.121.0.
+- [x] Implementar verificações de Auth, persistência, RLS, RPC, Storage e runtime MOCK com usuários sintéticos; três testes de isolamento PASS e interrupção sem Docker confirmada.
+- [x] Preparar aplicação isolada opcional do SQL candidato após baseline completo; relatório sanitizado registra etapa e último arquivo anunciado quando o replay falha.
+- [ ] Executar integração completa no GitHub/Linux com Docker (bloqueio: Docker/socket e ferramenta para iniciar workflow remoto indisponíveis neste sandbox); nenhuma aprovação de negócio ou publicação certificada.
+- Alertas identificados para 2B: `lov_finding_5c98e790929bfaee` permite publicação de prestador sem aprovação; `lov_finding_a637c991f2cfd872` refere-se a **agência**, não a um segundo alerta de prestador. Não tratados nesta rodada.
+- Rodadas seguintes preservadas: 2B permissões/fotos/auditoria/CSV; 2C cadastro mobile automatizado; 2D publicação homologada; 3A tracking/painéis; 3B WhatsApp oficial desabilitado sem autorização; 4A SEO/GSC. Reaproveitar /admin/anuncios, /admin/aprovar-patrocinadores, classificação de vagas, Web Vitals, conversões e mocks existentes.
+
 ## Roteiro 360° — Rodada 1 (2026-11-24)
 
 - [x] Ler o roteiro completo e reutilizar relatórios e scan existentes; nenhuma outra rodada iniciada.

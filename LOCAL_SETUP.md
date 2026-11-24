@@ -3,6 +3,46 @@
 Este guia deixa o projeto rodando por completo na sua máquina: banco de dados,
 Auth, Storage, Edge Functions e o app TanStack Start.
 
+> **Limite de homologação:** este guia descreve a configuração pretendida, não
+> comprova que todo o histórico de migrations e o seed foram executados com sucesso.
+> O seed histórico silencia algumas falhas e não cria o prestador/cidade anunciados
+> abaixo. Use o gate descartável da Rodada 2A antes de certificar esses fluxos.
+
+## Rodada 2A — execução descartável reproduzível
+
+```bash
+# Linux, Node 22, Docker local ativo e CLI 2.121.0; dependências do projeto instaladas.
+bunx vitest run src/test/disposable-stack-guards.test.ts
+node scripts/security/disposable-stack.mjs
+# Após baseline completo: aplica somente o candidato na cópia descartável.
+node scripts/security/disposable-stack.mjs --candidate
+```
+
+- Nunca copia `.env`, credenciais hospedadas, `.temp` ou dados reais. Não usa `link`,
+  `db push`, `--linked` nem `--db-url` hospedado. O daemon Docker é o socket local Linux.
+- Gera configuração da CLI em `/tmp`, usa PostgreSQL 15, copia migrations/seed sem
+  reescrever o histórico e destrói o stack/volumes ao terminar. Não modifica `supabase/config.toml`.
+- Os containers usam rede Docker interna sem saída externa. Isso também impede
+  cron/webhooks históricos de enviar mensagens durante o replay. A primeira execução
+  exige internet **no host** para baixar as imagens Docker e instalar dependências.
+- Cria usuários sintéticos pela Auth real; verifica sessão, persistência com leitura
+  pela API, negação de escrita de perfil alheio, papel administrativo por RPC,
+  Storage privado e resposta de um runtime MOCK explicitamente identificado.
+- Não concede novas permissões para fazer o teste passar. Uma migration, trigger,
+  policy ou seed incompatível interrompe a execução e mantém **NO-GO**.
+- O MOCK não certifica funções de negócio, aprovação, notificações nem cadastro mobile.
+  O teste de Storage é infraestrutura; as políticas de fotos existentes ficam para 2B.
+- Evidências sanitizadas: `test-results/disposable-stack/*.json`. Nenhum token,
+  senha, SQL com valores ou log bruto é publicado. Falha no replay aponta o último
+  arquivo de migration anunciado, não certifica que ele seja a causa única.
+- `.github/workflows/disposable-stack.yml` executa em PRs relevantes ou manualmente,
+  em runner Linux com Docker, sem secrets de produção, cancelando runs obsoletos.
+  Falhas notificam pelo mecanismo nativo do GitHub. O workflow existente de signup
+  não foi alterado nem utilizado para esta homologação.
+- Neste sandbox não há Docker nem socket: a execução completa está pendente no
+  GitHub/local. Workflow criado não significa workflow executado; PASS de
+  infraestrutura nunca libera publicação ou migração em produção.
+
 ---
 
 ## 1. Pré-requisitos

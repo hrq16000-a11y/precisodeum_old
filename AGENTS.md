@@ -21,3 +21,4 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Identity apply/dismiss audit metadata records field and suggestion identifiers, not old/new values or source text, so audit provenance does not duplicate sensitive identity data.
 - Health success requires a complete current read and confirmed history persistence; recovery notifications follow the history write so unavailable evidence cannot certify recovery.
 - Lead print reports escape every externally supplied text interpolation before document writing, including profile names and URL-derived filters, so exporting cannot execute user-supplied code.
+- Full backend integration runs in a temporary CLI project with unchanged historical migrations, loopback-only targets, scrubbed inherited credentials and fail-closed JSON evidence; a runtime mock or infrastructure PASS never certifies business approval or a production release.

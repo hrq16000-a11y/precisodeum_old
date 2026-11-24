@@ -1,0 +1,47 @@
+name: Disposable backend integration
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/seed.sql'
+      - 'docs/security/local-fixes/**'
+      - 'scripts/security/**'
+      - 'tests/security/**'
+      - 'src/test/disposable-stack-guards.test.ts'
+      - '.github/workflows/disposable-stack.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disposable-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Isolation guard regressions
+        run: bunx vitest run src/test/disposable-stack-guards.test.ts
+      - name: Replay real schema and check local services, then local candidate
+        run: node scripts/security/disposable-stack.mjs --candidate
+      - name: Upload sanitized evidence (also on failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disposable-backend-evidence
+          path: test-results/disposable-stack/*.json
+          retention-days: 7
+          if-no-files-found: error
