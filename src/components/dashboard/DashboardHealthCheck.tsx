@@ -48,13 +48,11 @@ export function DashboardHealthCheck({
       // Always log when status changes (failure or recovery), otherwise throttle
       const shouldLog = r.ok === false || recovered || (now - last) > LOG_THROTTLE_MS;
       if (!shouldLog) return;
-      lastLoggedRef.current = now;
-      sessionStorage.setItem(STORAGE_LAST_LOG, String(now));
       const { data: { user } } = await supabase.auth.getUser();
       const failedRpcs = r.rpcs.filter((x) => !x.ok).map((x) => x.name);
       const failedColumns = r.columns.filter((x) => !x.ok)
         .map((x) => ({ table: x.table, column: x.column }));
-      await supabase.from("health_check_history" as never).insert({
+      const { error } = await supabase.from("health_check_history" as never).insert({
         user_id: user?.id ?? null,
         source: recovered ? "dashboard:recovered" : "dashboard",
         ok: r.ok,
@@ -62,6 +60,9 @@ export function DashboardHealthCheck({
         failed_columns: failedColumns,
         raw: { ...(r as unknown as Record<string, unknown>), recovered } as Record<string, unknown>,
       } as never);
+      if (error) throw error;
+      lastLoggedRef.current = now;
+      sessionStorage.setItem(STORAGE_LAST_LOG, String(now));
     } catch (e) {
       // Silent — health logging must never break the dashboard
       console.warn("[DashboardHealthCheck] persist failed:", e);
@@ -83,7 +84,7 @@ export function DashboardHealthCheck({
       void persistResult(r, recovered);
       if (recovered) {
         toast.success("Banco recuperado", {
-          description: "Todas as RPCs e colunas críticas voltaram a responder.",
+          description: "As funções e colunas críticas estão presentes novamente. As ações ainda precisam de verificação.",
           duration: 5000,
         });
       }
@@ -147,7 +148,7 @@ export function DashboardHealthCheck({
       <Alert className="mb-3 border-green-500/40">
         <CheckCircle2 className="size-4 text-green-600" />
         <AlertTitle className="text-sm">
-          Banco íntegro — RPCs e colunas críticas OK
+          Estrutura verificada — funções e colunas presentes
         </AlertTitle>
       </Alert>
     );

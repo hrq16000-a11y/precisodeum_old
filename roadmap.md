@@ -1,11 +1,19 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Approved related-flow corrections (2026-11-24)
+
+- [x] Implement local sponsor review/cancellation and identity apply/dismiss corrections, preserving settled records, permissions, and settings.
+- [x] Implement local detailed audit, incomplete exports, suggestion read errors, and health/restoration reporting corrections.
+- [x] Run local function regressions and desktop/mobile checks; document limits in docs/security/local-fixes/README.md.
+- [ ] Apply/deploy local corrections (blocked by the local-only development constraint; requires deployment authorization).
+- [ ] Certify populated approval/application (blocked by empty shared queues and unavailable complete disposable application backend).
+
 ## Desktop/mobile security-flow recheck (2026-11-23)
 
 - [x] Recheck authenticated sponsor requests, profile suggestions, and audit report at 390px/1440px.
 - [x] Repeat disposable local function tests without changing real accounts (six groups pass; two criteria fail).
 - [x] Record results and distinguish layout checks from end-to-end approval verification in docs/security/desktop-mobile-flow-recheck-2026-11-23.md.
-- [ ] Certify populated UI approval/application (blocked by empty real queues, incomplete disposable backend, and the three known function failures).
+- [ ] Certify populated UI approval/application (blocked by empty real queues, incomplete disposable backend, and unapplied local function corrections).
 
 ## Rodada 2 — homologação (2026-11-23)
 
@@ -14,7 +22,7 @@
 - [x] Conferir controles ativos e abertura das cinco telas em 390px e 1440px.
 - [x] Executar aprovação e aplicação com registros descartáveis locais; registrar falhas e limites.
 - [x] Entregar relatório NO-GO com evidências de produção, sem nova publicação.
-- [ ] Homologar fluxos completos (bloqueios: auditoria detalhada ambígua, auditoria de sugestões ausente, payload proibido aprovado).
+- [ ] Homologar fluxos completos (correções passam localmente; bloqueios: aplicação autorizada e ambiente descartável completo).
 - [ ] Confirmar SHA público (bloqueio: domínio só apresenta deployment ID, sem vínculo verificável com commit).
 
 ## Incidente de estabilidade — 2026-09-02

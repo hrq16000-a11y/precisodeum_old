@@ -8,6 +8,7 @@
 // Admin-only.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { restoreCoverageStatus } from "../_shared/restoreAuditIntegrity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,10 +165,11 @@ Deno.serve(async (req) => {
       }
 
       let userRef: any = null;
-      const { data: urData, error: urErr } = await admin.rpc(
+      const { data: urData, error: urErr } = await userClient.rpc(
         "audit_user_ref_health" as any,
       );
-      if (!urErr && urData) {
+      const coverageStatus = restoreCoverageStatus(urData, Boolean(urErr), minCoverage, strict);
+      if (coverageStatus.verified) {
         const arr = urData as any[];
         const total = arr.reduce((a, r) => a + Number(r.total_rows || 0), 0);
         const filled = arr.reduce((a, r) => a + Number(r.filled || 0), 0);
@@ -185,16 +187,18 @@ Deno.serve(async (req) => {
       }
 
       const tablesOk = tables.every((t) => t.exists);
-      const coverageOk = !userRef ||
-        (userRef.coverage_pct ?? 100) >= minCoverage;
-      const ok = tablesOk && (strict ? coverageOk : true);
+      const coverageOk = coverageStatus.ok;
+      const ok = tablesOk && coverageOk;
 
       return new Response(
         JSON.stringify({
           ok,
           tables,
           user_ref: userRef,
-          coverage_below_threshold: !coverageOk,
+          audit_verified: coverageStatus.verified,
+          audit_error: urErr?.message ?? (!coverageStatus.verified ? "Audit coverage unavailable" : null),
+          coverage_below_threshold: coverageStatus.verified &&
+            coverageStatus.coverage_pct !== null && coverageStatus.coverage_pct < minCoverage,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -381,10 +385,10 @@ Deno.serve(async (req) => {
 
       // 3. user_ref audit RPC
       try {
-        const { error } = await admin.rpc("audit_user_ref_health" as any);
+        const { data, error } = await userClient.rpc("audit_user_ref_health" as any);
         tests.push({
           name: "rpc.audit_user_ref_health",
-          ok: !error,
+          ok: !error && Array.isArray(data) && data.length > 0,
           detail: error?.message,
         });
       } catch (e: any) {
@@ -393,6 +397,14 @@ Deno.serve(async (req) => {
           ok: false,
           detail: e.message,
         });
+      }
+
+      try {
+        const { data, error } = await userClient.rpc("audit_user_ref_full_detailed" as any);
+        tests.push({ name: "rpc.audit_user_ref_full_detailed", ok: !error && Array.isArray(data) && data.length > 0,
+          detail: error?.message ?? (!data?.length ? "Detailed audit unavailable" : undefined) });
+      } catch (e: any) {
+        tests.push({ name: "rpc.audit_user_ref_full_detailed", ok: false, detail: e.message });
       }
 
       // 4. Critical tables reachable

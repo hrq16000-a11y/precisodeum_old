@@ -39,9 +39,11 @@ export default function AdminPortabilityDetailsPage() {
   const [health, setHealth] = useState<HealthResult | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [readError, setReadError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
+    setReadError(null);
     try {
       const [{ data: h, error: e1 }, { data: hist, error: e2 }] = await Promise.all([
         supabase.rpc("validate_db_health" as never),
@@ -53,9 +55,11 @@ export default function AdminPortabilityDetailsPage() {
       ]);
       if (e1) throw e1;
       setHealth(h as unknown as HealthResult);
-      if (!e2) setHistory((hist as unknown as HistoryRow[]) ?? []);
+      if (e2) throw e2;
+      setHistory((hist as unknown as HistoryRow[]) ?? []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      setReadError('Não foi possível carregar a verificação completa e seu histórico. Tente novamente.');
       toast.error(`Erro: ${msg}`);
     } finally {
       setLoading(false);
@@ -92,12 +96,13 @@ export default function AdminPortabilityDetailsPage() {
           </Button>
         </header>
 
+        {readError && <p role="alert" className="text-sm text-destructive">{readError}</p>}
         {/* Status geral */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {health?.ok
-                ? <><CheckCircle2 className="size-5 text-green-600" />Banco íntegro</>
+                ? <><CheckCircle2 className="size-5 text-green-600" />Funções e colunas presentes</>
                 : <><AlertTriangle className="size-5 text-destructive" />Inconsistências detectadas</>}
             </CardTitle>
             <CardDescription>

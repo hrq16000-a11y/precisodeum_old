@@ -12,6 +12,7 @@ import AdminChangeRequestDiff from '@/components/sponsors/AdminChangeRequestDiff
 import type { ChangeRequestRow, ChangeRequestStatus } from '@/lib/sponsorSelfService';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { sponsorApprovalBlock } from '@/lib/relatedFlowIntegrity';
 
 const STATUSES: ChangeRequestStatus[] = ['pending', 'approved', 'rejected', 'cancelled'];
 
@@ -38,6 +39,11 @@ const AdminSponsorChangeRequestsPage = () => {
     async (id: string, decision: 'approved' | 'rejected') => {
       setBusyId(id);
       try {
+        if (decision === 'approved') {
+          const row = q.data?.find((request) => request.id === id);
+          const blocked = sponsorApprovalBlock(row?.changes);
+          if (blocked) throw new Error(blocked);
+        }
         const { error } = await supabase.rpc('admin_review_sponsor_change_request' as any, {
           _id: id,
           _decision: decision,
@@ -46,7 +52,7 @@ const AdminSponsorChangeRequestsPage = () => {
         if (error) throw error;
         toast.success(decision === 'approved' ? 'Solicitação aprovada.' : 'Solicitação rejeitada.');
         setComments((c) => ({ ...c, [id]: '' }));
-        q.refetch();
+        await q.refetch();
       } catch (e: any) {
         toast.error(e?.message || 'Erro ao revisar.');
       } finally {
@@ -83,6 +89,11 @@ const AdminSponsorChangeRequestsPage = () => {
           <div className="flex h-32 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
           </div>
+        ) : q.isError ? (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>Não foi possível carregar as solicitações.</p>
+            <Button variant="outline" onClick={() => void q.refetch()}>Tentar novamente</Button>
+          </div>
         ) : (q.data || []).length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
@@ -92,6 +103,7 @@ const AdminSponsorChangeRequestsPage = () => {
         ) : (
           (q.data || []).map((row: any) => {
             const r = row as ChangeRequestRow & { sponsors?: { title?: string; company_name?: string } };
+            const approvalBlock = sponsorApprovalBlock(r.changes);
             return (
               <Card key={r.id}>
                 <CardHeader>
@@ -111,6 +123,7 @@ const AdminSponsorChangeRequestsPage = () => {
 
                   {r.status === 'pending' && (
                     <div className="space-y-2">
+                      {approvalBlock && <p role="alert" className="text-sm text-destructive">{approvalBlock}</p>}
                       <Textarea
                         placeholder="Comentário (opcional, visível para o patrocinador)"
                         value={comments[r.id] || ''}
@@ -118,13 +131,13 @@ const AdminSponsorChangeRequestsPage = () => {
                         rows={2}
                       />
                       <div className="flex flex-wrap gap-2">
-                        <Button onClick={() => review(r.id, 'approved')} disabled={busyId === r.id}>
+                        <Button onClick={() => review(r.id, 'approved')} disabled={busyId !== null || approvalBlock !== null}>
                           <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" /> Aprovar
                         </Button>
                         <Button
                           variant="destructive"
                           onClick={() => review(r.id, 'rejected')}
-                          disabled={busyId === r.id}
+                          disabled={busyId !== null}
                         >
                           <XCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Rejeitar
                         </Button>

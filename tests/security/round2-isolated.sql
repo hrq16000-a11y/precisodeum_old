@@ -21,10 +21,13 @@ DO $$
 DECLARE rid uuid:=gen_random_uuid();
 BEGIN
  INSERT INTO sponsor_change_requests(id,sponsor_id,status,changes) VALUES(rid,'22222222-2222-2222-2222-222222222222','pending','{"secret":"attack"}');
- PERFORM admin_review_sponsor_change_request(rid,'approved');
+ BEGIN
+  PERFORM admin_review_sponsor_change_request(rid,'approved');
+  RAISE EXCEPTION 'Forbidden payload accepted';
+ EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
  IF NOT EXISTS(SELECT 1 FROM sponsors WHERE secret='preserve') THEN RAISE EXCEPTION 'Protected sponsor field changed'; END IF;
  RAISE NOTICE 'PASS: forbidden sponsor field remains unchanged';
- IF EXISTS(SELECT 1 FROM sponsor_change_requests WHERE id=rid AND status='approved') THEN RAISE WARNING 'FAIL criterion: forbidden-only sponsor payload is approved, not rejected'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM sponsor_change_requests WHERE id=rid AND status='pending') THEN RAISE EXCEPTION 'Forbidden payload status changed'; END IF;
 END $$;
 DO $$
 BEGIN
@@ -44,9 +47,10 @@ BEGIN
   PERFORM resolve_identity_suggestion(rid,'apply');
   IF NOT EXISTS(SELECT 1 FROM profiles p WHERE id=auth.uid() AND (to_jsonb(p)->>mapped)='test-'||f) THEN RAISE EXCEPTION 'Identity field % failed',f; END IF;
   IF NOT EXISTS(SELECT 1 FROM profile_change_suggestions WHERE id=rid AND status='applied') THEN RAISE EXCEPTION 'Suggestion not persisted'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM audit_log WHERE action='identity_suggestion_applied' AND details->>'suggestion_id'=rid::text) THEN RAISE EXCEPTION 'Suggestion audit missing for %', f; END IF;
  END LOOP;
  RAISE NOTICE 'PASS: four identity fields and two aliases persist';
- IF NOT EXISTS(SELECT 1 FROM audit_log WHERE action='identity_suggestion_applied') THEN RAISE WARNING 'FAIL criterion: identity change audit silently missing (columns mismatch)'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM audit_log WHERE action='identity_suggestion_applied') THEN RAISE EXCEPTION 'Identity audit missing'; END IF;
 END $$;
 DO $$
 DECLARE rid uuid:=gen_random_uuid();

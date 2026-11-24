@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { flowErrorMessage, isAuditComplete } from "@/lib/relatedFlowIntegrity";
 import {
   Archive, Download, ShieldCheck, Loader2, FileText,
   CheckCircle2, Circle, Eye, EyeOff, Trash2, RefreshCw, ListChecks, Server, Webhook,
@@ -599,9 +600,14 @@ function UserRefAuditTab() {
   const [threshold, setThreshold] = useState<number>(95);
   const [strict, setStrict] = useState<boolean>(true);
   const [savingCfg, setSavingCfg] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [complete, setComplete] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
+    setComplete(false);
+    setAuditError(null);
+    setDetail([]);
     try {
       const [{ data: basic, error: e1 }, { data: full, error: e2 }] =
         await Promise.all([
@@ -610,9 +616,15 @@ function UserRefAuditTab() {
         ]);
       if (e1) throw e1;
       setRows((basic as UserRefRow[]) ?? []);
-      if (!e2) setDetail((full as UserRefDetailRow[]) ?? []);
+      if (e2) throw e2;
+      const summary = (basic as UserRefRow[]) ?? [];
+      const details = (full as UserRefDetailRow[]) ?? [];
+      if (!isAuditComplete(summary, details)) throw new Error('Relatório detalhado incompleto. Recarregue para tentar novamente.');
+      setDetail(details);
+      setComplete(true);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = flowErrorMessage(e, 'Não foi possível carregar a auditoria completa.');
+      setAuditError(msg);
       toast.error(`Erro: ${msg}`);
     } finally {
       setLoading(false);
@@ -717,7 +729,7 @@ function UserRefAuditTab() {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+        <CardHeader className="flex flex-col items-start gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Fingerprint className="size-5" />Auditoria global do user_ref
@@ -727,7 +739,7 @@ function UserRefAuditTab() {
             </CardDescription>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={() => exportUserRefCsv(rows, detail)} disabled={rows.length === 0}>
+            <Button variant="outline" size="sm" onClick={() => exportUserRefCsv(rows, detail)} disabled={loading || !complete}>
               <Download className="size-4 mr-2" />Exportar CSV detalhado
             </Button>
             <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
@@ -737,6 +749,7 @@ function UserRefAuditTab() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {auditError && <p role="alert" className="text-sm text-destructive">Relatório incompleto: {auditError}</p>}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="border rounded-lg p-3">
               <div className="text-xs text-muted-foreground">Tabelas</div>
@@ -821,6 +834,10 @@ function UserRefAuditTab() {
 // ---------------- user_ref CSV export (detailed + sponsor evidence) ----------------
 
 function exportUserRefCsv(rows: UserRefRow[], detail: UserRefDetailRow[]) {
+  if (!isAuditComplete(rows, detail)) {
+    toast.error('Relatório incompleto. Recarregue antes de exportar.');
+    return;
+  }
   const detailMap = new Map(detail.map((d) => [d.table_name, d]));
   const header = [
     "table_name", "data_type", "total_rows", "filled", "missing",
