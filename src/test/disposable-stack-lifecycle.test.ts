@@ -100,7 +100,7 @@ describe('current-run evidence and cleanup (adapter tests, not backend certifica
     const tool = (name: string, source: string) => writeFileSync(join(fakeBin, name), `#!${process.execPath}\n${source}`, { mode: 0o700 });
     tool('docker', `const a=process.argv.slice(2); if(a[0]==='info') console.log('0.0.0'); if(a[0]==='network'&&a[1]==='inspect') console.log('true');`);
     tool('psql', `console.log('psql (PostgreSQL) 15.0');`);
-    tool('supabase', `const fs=require('node:fs'); const a=process.argv.slice(2); if(a[0]==='--version') console.log('2.121.0'); if(a[0]==='init'){fs.mkdirSync('supabase');fs.writeFileSync('supabase/config.toml','project_id = "mock"\\nmajor_version = 15\\n');} if(a[0]==='start'){fs.writeFileSync('starting','MOCK');setInterval(()=>{},1000);}`);
+    tool('supabase', `const fs=require('node:fs'); const a=process.argv.slice(2); if(a[0]==='--version') console.log('2.121.0'); if(a[0]==='init'){fs.mkdirSync('supabase');fs.writeFileSync('supabase/config.toml','project_id = "mock"\\nmajor_version = 15\\n[analytics]\\nenabled = true\\n[db.pooler]\\nenabled = true\\n');} if(a[0]==='start'&&a.includes('--help')){console.log('--exclude');} else if(a[0]==='start'){fs.writeFileSync('starting','MOCK');setInterval(()=>{},1000);}`);
     const child = spawn(process.execPath, [resolve('scripts/security/disposable-stack.mjs'), '--candidate'], {
       env: { ...process.env, PATH: `${fakeBin}:${process.env['PATH'] ?? ''}`, GITHUB_STEP_SUMMARY: '', GITHUB_RUN_ID: '', GITHUB_RUN_ATTEMPT: '', DISPOSABLE_EXECUTION_ID: id, DISPOSABLE_SUPABASE_BIN: join(fakeBin, 'supabase') }, stdio: 'ignore',
     });

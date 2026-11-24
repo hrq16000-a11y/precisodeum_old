@@ -1,8 +1,6 @@
 name: Disposable backend integration
 
 on:
-  push:
-    branches: [qa-disposable-pr3-20261124]
   pull_request:
     paths:
       - 'supabase/migrations/**'

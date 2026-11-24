@@ -1,0 +1,78 @@
+name: Disposable SQL contracts (partial evidence)
+
+on:
+  push:
+    branches: [qa-disposable-pr3-20261124]
+    paths:
+      - '.github/workflows/disposable-sql-contracts.yml'
+      - 'tests/security/**'
+      - 'scripts/security/**'
+      - 'src/test/disposable-stack-lifecycle.test.ts'
+      - 'docs/security/local-fixes/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Existing lifecycle and sanitizer contracts
+        run: |
+          bunx vitest run src/test/disposable-stack-guards.test.ts src/test/disposable-stack-lifecycle.test.ts
+          node --test scripts/security/disposable-diagnostics.test.mjs
+      - name: PostgreSQL 15 isolated SQL contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/disposable-sql
+          name="preciso-sql-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          result=FAIL
+          cleanup=NOT_VERIFIED
+          image_id=UNAVAILABLE
+          finish() {
+            rc=$?
+            trap - EXIT
+            if docker container inspect "$name" >/dev/null 2>&1; then
+              docker rm -fv "$name" >/dev/null || rc=1
+            fi
+            if docker info >/dev/null 2>&1 && ! docker ps -a --format '{{.Names}}' | grep -Fxq "$name"; then cleanup=PASS; else cleanup=FAIL; rc=1; fi
+            printf '{"scope":"SYNTHETIC_SQL_ONLY","commitSha":"%s","imageId":"%s","sqlContracts":"%s","cleanup":"%s","fullIntegration":"NOT_EXECUTED","productionApproval":false}\n' "$GITHUB_SHA" "$image_id" "$result" "$cleanup" > test-results/disposable-sql/summary.json
+            cat test-results/disposable-sql/summary.json
+            exit "$rc"
+          }
+          trap finish EXIT
+          docker pull postgres:15
+          image_id="$(docker image inspect --format '{{.Id}}' postgres:15)"
+          [[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]]
+          docker run -d --name "$name" --network none --tmpfs /var/lib/postgresql/data:rw,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust "$image_id" >/dev/null
+          test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$name")" = none
+          ready=0
+          for i in $(seq 1 60); do
+            if docker exec "$name" pg_isready -U postgres -d postgres >/dev/null 2>&1 && docker exec "$name" psql -X -U postgres -d postgres -Atc 'select 1' >/dev/null 2>&1; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          for file in tests/security/round2-fixture.sql docs/security/local-fixes/related-flows.sql tests/security/round2-isolated.sql tests/security/related-flows.sql tests/security/round2b-audit-privacy.sql; do
+            echo "Executing synthetic contract: $file"
+            docker exec -i "$name" psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$file"
+          done
+          result=PASS
+      - name: Upload partial evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disposable-sql-contracts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/disposable-sql/summary.json
+          if-no-files-found: warn
+          retention-days: 7
