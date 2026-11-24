@@ -13,6 +13,7 @@ The existing restoration endpoint's source is corrected but has not been deploye
 - Sponsor review rejects empty, mixed forbidden, malformed, and renewal payloads before status changes or notifications. Missing sponsors fail instead of producing false approval. Renewal requests remain pending and must use the existing billing workflow; no payment, subscription, or expiry change is inferred.
 - Review and cancellation lock the same pending request. Identity apply/dismiss lock the suggestion; application also locks the profile. Settled requests and suggestions are not rewritten.
 - Identity changes use the actual audit columns. Application and dismissal write audit records. Failed audit insertion rolls back the change instead of silently succeeding.
+- Rodada 2B: application audit stores only the normalized field and suggestion identifier, with author, target, action and timestamp in the audit row; old/new identity values and untrusted source text are omitted. Targeted synthetic privacy checks cover four fields and two aliases.
 - Detailed audit qualifies catalog columns and surfaces missing-sample query failures. It remains security-invoker and admin-gated.
 - The review page blocks unsupported approvals and distinguishes read failures from an empty queue. This browser check is not a substitute for the pending database correction.
 - Suggestion reads show loading/error/retry states. Unknown or unavailable action responses no longer remove the item as if successful. Concurrent local action buttons are disabled.

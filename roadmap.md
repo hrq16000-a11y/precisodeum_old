@@ -1,5 +1,12 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Rodada 2B — escopo restrito (2026-11-24)
+
+- [x] Identificar a terceira falha nos relatórios existentes: consulta detalhada de auditoria ambígua.
+- [x] Conferir correções locais dos três defeitos e testar apenas a lacuna de privacidade na auditoria de sugestões (seis casos PASS).
+- [x] Entregar tabela PASS/FAIL, IDs históricos disponíveis e leitura da versão pública, sem repetir testes visuais.
+- [ ] Homologar em ambiente completo e comprovar SHA público (bloqueios: correções não implantadas, backend descartável completo e vínculo público com commit indisponíveis).
+
 ## Approved related-flow corrections (2026-11-24)
 
 - [x] Sweep sponsor self-service/history, restoration UI/endpoint, offline reports, dashboard consumers, and direct scheduled jobs; correct remaining false-success/read failures locally.

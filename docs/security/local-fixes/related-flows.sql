@@ -73,7 +73,6 @@ AS $function$
 DECLARE
   v_uid uuid := auth.uid();
   v_row public.profile_change_suggestions%ROWTYPE;
-  v_old_value text;
   v_f text;
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'auth required'; END IF;
@@ -101,8 +100,7 @@ BEGIN
     RAISE EXCEPTION 'field % not allowed for self-apply', v_f;
   END IF;
 
-  SELECT CASE v_f WHEN 'full_name' THEN full_name WHEN 'tax_id' THEN tax_id WHEN 'whatsapp' THEN whatsapp ELSE phone END
-    INTO v_old_value FROM public.profiles WHERE id = v_uid FOR UPDATE;
+  PERFORM 1 FROM public.profiles WHERE id = v_uid FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'profile not found'; END IF;
 
   UPDATE public.profiles SET
@@ -117,7 +115,7 @@ BEGIN
 
   INSERT INTO public.audit_log (user_id, action, resource_type, resource_id, details)
     VALUES (v_uid, 'identity_suggestion_applied', 'profile', v_uid,
-      jsonb_build_object('field', v_f, 'old_value', v_old_value, 'new_value', v_row.suggested_value, 'source', v_row.source, 'suggestion_id', v_row.id));
+      jsonb_build_object('field', v_f, 'suggestion_id', v_row.id));
 
   RETURN jsonb_build_object('status','applied', 'field', v_f, 'new_value', v_row.suggested_value);
 END;
