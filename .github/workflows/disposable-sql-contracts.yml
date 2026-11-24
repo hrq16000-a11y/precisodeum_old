@@ -6,7 +6,6 @@ on:
     paths:
       - '.github/workflows/disposable-sql-contracts.yml'
       - 'tests/security/**'
-      - 'scripts/security/**'
       - 'src/test/disposable-stack-lifecycle.test.ts'
       - 'docs/security/local-fixes/**'
   workflow_dispatch:

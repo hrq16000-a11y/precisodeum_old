@@ -1,0 +1,34 @@
+name: Disposable real core (Compose)
+
+on:
+  push:
+    branches: [qa-disposable-pr3-20261124]
+    paths:
+      - '.github/workflows/disposable-real-core.yml'
+      - 'scripts/security/disposable-real-core.sh'
+      - 'scripts/security/disposable-core-probe.mjs'
+      - 'tests/security/disposable/verify-stack.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  real-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Boot isolated core, replay schema and verify real services
+        run: bash scripts/security/disposable-real-core.sh
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disposable-real-core-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/disposable-core/*.json
+          if-no-files-found: warn
+          retention-days: 7

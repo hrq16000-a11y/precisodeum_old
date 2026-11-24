@@ -5,7 +5,8 @@ import pg from 'pg';
 import { assertLoopback } from '../../../scripts/security/disposable-guards.mjs';
 import { CHECKS } from '../../../scripts/security/disposable-lifecycle.mjs';
 
-const [statusPath, outputPath] = process.argv.slice(2);
+const [statusPath, outputPath, scope] = process.argv.slice(2);
+const coreOnly = scope === '--core-only';
 const status = JSON.parse(readFileSync(statusPath, 'utf8'));
 assertLoopback(status.API_URL);
 assertLoopback(status.DB_URL, ['postgres:', 'postgresql:']);
@@ -88,7 +89,7 @@ try {
     const denied = await anonymous.storage.from(bucket).download('probe.png');
     assert.ok(denied.error);
   });
-  await check('edge-runtime-explicit-synthetic-mock', async () => {
+  if (!coreOnly) await check('edge-runtime-explicit-synthetic-mock', async () => {
     const response = await fetch(`${status.API_URL}/functions/v1/runtime-probe`, { headers: { apikey: status.ANON_KEY } });
     assert.equal(response.status, 200);
     const body = await response.json();
@@ -101,6 +102,6 @@ try {
 } finally {
   await db.end().catch(() => {});
   const checks = CHECKS.map(check => results.find(result => result.check === check) ?? { check, result: 'NOT_EXECUTED' });
-  writeFileSync(outputPath, JSON.stringify({ synthetic: true, checks, complete: checks.every(r => r.result === 'PASS'), businessApprovalCertified: false }, null, 2));
+  writeFileSync(outputPath, JSON.stringify({ synthetic: true, checks, complete: checks.every(r => r.result === 'PASS'), coreComplete: coreOnly && checks.filter(r => r.check !== 'edge-runtime-explicit-synthetic-mock').every(r => r.result === 'PASS'), businessApprovalCertified: false }, null, 2));
   // Entire disposable stack is deleted by the parent, including users/files.
 }
