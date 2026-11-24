@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'push' && '89a7af1557ec64664e56e881687a1bf8e6b4c1c0' || github.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -43,6 +43,8 @@ jobs:
           version: 2.121.0
       - name: Isolation guard regressions
         run: bunx vitest run src/test/disposable-stack-guards.test.ts src/test/disposable-stack-lifecycle.test.ts
+      - name: Sanitized startup diagnostics tests
+        run: node --test scripts/security/disposable-diagnostics.test.mjs
       - name: Replay real schema and check local services, then local candidate
         run: node scripts/security/disposable-stack.mjs --candidate
       - name: Verify current-run cleanup even after failure

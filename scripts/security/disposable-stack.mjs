@@ -2,6 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, readlinkSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { assertLoopback, isolatedEnvironment, migrationHint } from './disposable-guards.mjs';
+import { commandDiagnostic } from './disposable-diagnostics.mjs';
 import { cleanupOwned, executionId, failedMigration, ownedResource, ownedWorkspace, stepSummary, testOutcome } from './disposable-lifecycle.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -30,7 +31,7 @@ const report = cleanupOnly && existsSync(summaryPath) ? JSON.parse(readFileSync(
   tools: { node: process.version, docker: null, supabase: null, psql: null }, missingDependencies: [],
   synthetic: true, productionTouched: false, businessApprovalCertified: false, candidateApplied: false,
   baseline: testOutcome(), candidate: testOutcome(), candidateSql: 'NOT_EXECUTED',
-  lastMigrationAnnounced: null, failedMigration: null, stages: [], decision: 'NO-GO', cleanup: { result: 'NOT_VERIFIED' },
+  lastMigrationAnnounced: null, failedMigration: null, commandFailures: [], stages: [], decision: 'NO-GO', cleanup: { result: 'NOT_VERIFIED' },
 };
 let phase = 'docker';
 let interrupted = false;
@@ -58,15 +59,20 @@ async function command(binary, args, { record = true } = {}) {
     // Bounded, in-memory only: output may include local secrets and is never emitted.
     child.stdout.on('data', chunk => { stdout = (stdout + chunk.toString()).slice(-8 * 1024 * 1024); });
     child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-8 * 1024 * 1024); });
-    const timer = setTimeout(() => { try { process.kill(-child.pid, 'SIGKILL'); } catch {} }, 600_000);
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; try { process.kill(-child.pid, 'SIGKILL'); } catch {} }, 600_000);
     let missing = false;
     child.on('error', error => { missing = error.code === 'ENOENT'; });
-    child.on('close', code => {
+    child.on('close', (code, signal) => {
       clearTimeout(timer); active.delete(child);
       if (record) {
         const output = `${stdout}\n${stderr}`;
         report.lastMigrationAnnounced = migrationHint(output) ?? report.lastMigrationAnnounced;
         report.failedMigration = failedMigration(output) ?? report.failedMigration;
+        if (code !== 0 || interrupted) {
+          const diagnostic = commandDiagnostic(output, { code, signal, timedOut, missing });
+          (report.commandFailures ??= []).push({ stage: phase, tool: binary === cli ? 'supabase-cli' : binary === 'docker' ? 'docker' : binary === 'psql' ? 'psql' : 'node', ...diagnostic });
+        }
         if (missing && ['docker', 'psql', cli].includes(binary)) report.missingDependencies.push(binary === cli ? 'supabase-cli' : binary);
       }
       if (code !== 0 || (interrupted && record)) reject(new Error('COMMAND_FAILED'));
