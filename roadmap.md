@@ -132,3 +132,5 @@ Demais blocos ficam listados como tickets prontos para as próximas iterações.
 - [x] Corrigir sobreposição da navegação inferior e largura/rolagem do formulário.
 - [x] Tornar erros acionáveis e levar o foco ao campo que precisa de correção.
 - [ ] Validar criação e persistência do serviço em celular e desktop.
+
+- 2026-11-24 07:01 UTC: nova tentativa de sincronização solicitada pelo proprietário (commit gatilho; envio feito pela plataforma ao fim do turno).
