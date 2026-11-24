@@ -134,3 +134,11 @@ Demais blocos ficam listados como tickets prontos para as próximas iterações.
 - [ ] Validar criação e persistência do serviço em celular e desktop.
 
 - 2026-11-24 07:01 UTC: nova tentativa de sincronização solicitada pelo proprietário (commit gatilho; envio feito pela plataforma ao fim do turno).
+
+## Retomada 24/11/2026 07:30 UTC
+- [x] Sincronização com o GitHub restabelecida: `main` remoto recebeu os commits pendentes (confirmado pela API, inclusive o commit mais recente).
+- [x] Tela `/admin/github-sync` com o que foi enviado, o que falta e as automações recentes.
+- [ ] Homologação descartável: últimas execuções no ramo `qa-disposable-pr3-20261124` falharam (etapa de guardas de isolamento em `disposable-stack.yml`; reaplicação do histórico de banco em `disposable-real-core.yml`). Bloqueia publicação.
+- [ ] Aplicar correções candidatas no banco real — aguarda homologação aprovada e autorização do proprietário.
+- [ ] Publicar release e conferir SHA/READY/testes de segurança — aguarda os dois itens acima.
+- Permissão Workflows do app Lovable no GitHub: não verificável pela API com a conta conectada; o envio de arquivos de automação chegou ao `main`, o que indica permissão concedida.

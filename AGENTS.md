@@ -23,3 +23,7 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Lead print reports escape every externally supplied text interpolation before document writing, including profile names and URL-derived filters, so exporting cannot execute user-supplied code.
 - Full backend integration runs in a temporary CLI project with unchanged historical migrations, loopback-only targets, scrubbed inherited credentials and fail-closed JSON evidence; a runtime mock or infrastructure PASS never certifies business approval or a production release.
 - Disposable CI runs use per-execution project/resource identifiers and a persisted sanitized manifest; scoped inventories and process/file verification, including an always-run cleanup, are required before cleanup can pass.
+
+## Release visibility
+
+- `/admin/github-sync` reads the repository only server-side through the linked GitHub connector (admin-checked) and compares it to the commit list embedded at build time; only the latest successful `disposable-stack.yml` run counts as an approved homologation, so failed, running or missing runs never unlock publishing.
