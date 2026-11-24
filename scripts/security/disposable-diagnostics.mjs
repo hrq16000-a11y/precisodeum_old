@@ -14,6 +14,11 @@ export function commandDiagnostic(output, { code, signal, timedOut, missing } = 
   ];
   const categories = rules.filter(([, re]) => re.test(output)).map(([name]) => name);
   const sqlState = output.match(/\bSQLSTATE\s*[:=]?\s*([0-9A-Z]{5})\b/i)?.[1]?.toUpperCase() ?? null;
-  return { exitCode: Number.isInteger(code) ? code : null, signal: ['SIGTERM','SIGKILL','SIGINT'].includes(signal) ? signal : null,
+  // The public artifact can show only fixed infrastructure vocabulary, not arbitrary error text.
+  // Select the final diagnostic lines and retain known words in their original order.
+  const vocabulary = new Set('error failed failure cannot could unable invalid unsupported required missing unknown denied refused timeout canceled cancelled exhausted unavailable unhealthy docker daemon container containers image images registry network port address bind listen localhost health check database postgres postgresql supabase cli start startup starting started initialization initialize config configuration parse version major analytics logflare vector storage kong auth gotrue edge runtime pull pulling download resolve manifest architecture platform permission disk memory space connection connect reset terminated process exit code not found already exists running internal bridge endpoint migration seed service services certificate tls socket context deadline exceeded'.split(' '));
+  const terminal = output.split(/\r?\n/).filter(line => /(?:error|fail|cannot|unable|invalid|unsupported|denied|timeout|unhealthy|missing|exit|not found)/i.test(line)).slice(-4);
+  const terminalVocabulary = terminal.map(line => (line.toLowerCase().match(/[a-z]+/g) ?? []).filter(word => vocabulary.has(word)).slice(0, 20).join(' ')).filter(Boolean);
+  return { terminalVocabulary, exitCode: Number.isInteger(code) ? code : null, signal: ['SIGTERM','SIGKILL','SIGINT'].includes(signal) ? signal : null,
     categories: [...new Set([...(timedOut ? ['COMMAND_TIMEOUT'] : []), ...(missing ? ['COMMAND_MISSING'] : []), ...categories, ...(!timedOut && !missing && !categories.length ? ['UNCLASSIFIED'] : [])])], sqlState };
 }

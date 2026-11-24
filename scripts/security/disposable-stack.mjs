@@ -133,7 +133,7 @@ try {
       report.tools.docker = /^[0-9][0-9a-zA-Z.+-]{0,60}$/.test(version) ? version : 'AVAILABLE';
     });
     await stage('network-isolation', async () => {
-      await command('docker', ['network', 'create', '--internal', state.network]);
+      await command('docker', ['network', 'create', '--internal', '-o', 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1', state.network]);
       state.resources.push(`network:${state.network}`); persist();
       const internal = await command('docker', ['network', 'inspect', state.network, '--format', '{{.Internal}}']);
       if (internal.trim() !== 'true') throw new Error('NETWORK_NOT_INTERNAL');
@@ -148,6 +148,19 @@ try {
       let config = readFileSync(configPath, 'utf8');
       config = config.replace(/^project_id\s*=.*$/m, `project_id = "${state.projectId}"`);
       config = config.replace(/^major_version\s*=.*$/m, 'major_version = 15');
+      // Match the project's documented local settings without copying its hosted project ID.
+      for (const section of ['analytics', 'db.pooler']) {
+        const header = `[${section}]`;
+        const lines = config.split('\n');
+        const start = lines.findIndex(line => line.trim() === header);
+        if (start < 0) throw new Error('MISSING_LOCAL_CONFIG_SECTION');
+        const next = lines.findIndex((line, index) => index > start && /^\s*\[/.test(line));
+        const end = next < 0 ? lines.length : next;
+        const setting = lines.findIndex((line, index) => index > start && index < end && /^\s*enabled\s*=/.test(line));
+        if (setting < 0) throw new Error('MISSING_LOCAL_CONFIG_SETTING');
+        lines[setting] = 'enabled = false';
+        config = lines.join('\n');
+      }
       config += '\n[functions.runtime-probe]\nverify_jwt = false\n';
       writeFileSync(configPath, config, { mode: 0o600 });
       state.resources.push('temporary-config'); persist();
@@ -156,7 +169,15 @@ try {
       mkdirSync(join(state.workspace, 'supabase/migrations'), { recursive: true });
       cpSync(join(root, 'tests/security/disposable/functions'), join(state.workspace, 'supabase/functions'), { recursive: true });
     });
-    await stage('empty-stack-start', async () => { await cliRun(['start', '--debug']); });
+    await stage('empty-stack-start', async () => {
+      // Deliberately omit only auxiliary services; preserve Postgres, Auth,
+      // PostgREST, Kong, Storage, Realtime, SMTP and Edge Runtime with health checks.
+      const excluded = ['studio', 'postgres-meta', 'imgproxy', 'logflare', 'vector', 'supavisor'];
+      const help = await cliRun(['start', '--help']);
+      if (!/--exclude/.test(help)) throw new Error('CLI_EXCLUDE_UNSUPPORTED');
+      report.startupProfile = { mode: 'minimal-required-services', excluded, internalNetwork: true, healthChecksRequired: true };
+      await cliRun(['start', '--exclude', excluded.join(','), '--debug']);
+    });
     let statusPath;
     let status;
     await stage('local-target', async () => {

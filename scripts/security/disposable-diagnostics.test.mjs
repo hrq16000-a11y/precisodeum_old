@@ -13,3 +13,9 @@ test('unknown failure and timeout remain explicit', () => {
   assert.deepEqual(commandDiagnostic('', {timedOut:true,signal:'SIGKILL'}).categories, ['COMMAND_TIMEOUT']);
   assert.deepEqual(commandDiagnostic('', {missing:true}).categories, ['COMMAND_MISSING']);
 });
+
+test('terminal diagnostic vocabulary cannot expose arbitrary data', () => {
+  const result = commandDiagnostic('Error: failed to initialize container; https://private.invalid/ABCD; key=verysecret', { code: 1 });
+  assert.deepEqual(result.terminalVocabulary, ['error failed initialize container invalid']);
+  assert.doesNotMatch(JSON.stringify(result), /private|verysecret|ABCD|https/i);
+});
