@@ -89,6 +89,7 @@ import { Route as AdminFunilCadastroRouteImport } from './routes/admin/funil-cad
 import { Route as AdminFunilHealthRouteImport } from './routes/admin/funil-health'
 import { Route as AdminFunilPublicoRouteImport } from './routes/admin/funil-publico'
 import { Route as AdminGamificacaoRouteImport } from './routes/admin/gamificacao'
+import { Route as AdminGithubSyncRouteImport } from './routes/admin/github-sync'
 import { Route as AdminGovernancaRouteImport } from './routes/admin/governanca'
 import { Route as AdminHealthCheckRouteImport } from './routes/admin/health-check'
 import { Route as AdminHeroBannersRouteImport } from './routes/admin/hero-banners'
@@ -641,6 +642,11 @@ const AdminFunilPublicoRoute = AdminFunilPublicoRouteImport.update({
 const AdminGamificacaoRoute = AdminGamificacaoRouteImport.update({
   id: '/admin/gamificacao',
   path: '/admin/gamificacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGithubSyncRoute = AdminGithubSyncRouteImport.update({
+  id: '/admin/github-sync',
+  path: '/admin/github-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminGovernancaRoute = AdminGovernancaRouteImport.update({
@@ -1498,6 +1504,7 @@ export interface FileRoutesByFullPath {
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
   '/admin/gamificacao': typeof AdminGamificacaoRoute
+  '/admin/github-sync': typeof AdminGithubSyncRoute
   '/admin/governanca': typeof AdminGovernancaRoute
   '/admin/health-check': typeof AdminHealthCheckRoute
   '/admin/hero-banners': typeof AdminHeroBannersRoute
@@ -1731,6 +1738,7 @@ export interface FileRoutesByTo {
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
   '/admin/gamificacao': typeof AdminGamificacaoRoute
+  '/admin/github-sync': typeof AdminGithubSyncRoute
   '/admin/governanca': typeof AdminGovernancaRoute
   '/admin/health-check': typeof AdminHealthCheckRoute
   '/admin/hero-banners': typeof AdminHeroBannersRoute
@@ -1964,6 +1972,7 @@ export interface FileRoutesById {
   '/admin/funil-health': typeof AdminFunilHealthRoute
   '/admin/funil-publico': typeof AdminFunilPublicoRoute
   '/admin/gamificacao': typeof AdminGamificacaoRoute
+  '/admin/github-sync': typeof AdminGithubSyncRoute
   '/admin/governanca': typeof AdminGovernancaRoute
   '/admin/health-check': typeof AdminHealthCheckRoute
   '/admin/hero-banners': typeof AdminHeroBannersRoute
@@ -2199,6 +2208,7 @@ export interface FileRouteTypes {
     | '/admin/funil-health'
     | '/admin/funil-publico'
     | '/admin/gamificacao'
+    | '/admin/github-sync'
     | '/admin/governanca'
     | '/admin/health-check'
     | '/admin/hero-banners'
@@ -2432,6 +2442,7 @@ export interface FileRouteTypes {
     | '/admin/funil-health'
     | '/admin/funil-publico'
     | '/admin/gamificacao'
+    | '/admin/github-sync'
     | '/admin/governanca'
     | '/admin/health-check'
     | '/admin/hero-banners'
@@ -2664,6 +2675,7 @@ export interface FileRouteTypes {
     | '/admin/funil-health'
     | '/admin/funil-publico'
     | '/admin/gamificacao'
+    | '/admin/github-sync'
     | '/admin/governanca'
     | '/admin/health-check'
     | '/admin/hero-banners'
@@ -2898,6 +2910,7 @@ export interface RootRouteChildren {
   AdminFunilHealthRoute: typeof AdminFunilHealthRoute
   AdminFunilPublicoRoute: typeof AdminFunilPublicoRoute
   AdminGamificacaoRoute: typeof AdminGamificacaoRoute
+  AdminGithubSyncRoute: typeof AdminGithubSyncRoute
   AdminGovernancaRoute: typeof AdminGovernancaRoute
   AdminHealthCheckRoute: typeof AdminHealthCheckRoute
   AdminHeroBannersRoute: typeof AdminHeroBannersRoute
@@ -3611,6 +3624,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/gamificacao'
       fullPath: '/admin/gamificacao'
       preLoaderRoute: typeof AdminGamificacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/github-sync': {
+      id: '/admin/github-sync'
+      path: '/admin/github-sync'
+      fullPath: '/admin/github-sync'
+      preLoaderRoute: typeof AdminGithubSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/governanca': {
@@ -4766,6 +4786,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminFunilHealthRoute: AdminFunilHealthRoute,
   AdminFunilPublicoRoute: AdminFunilPublicoRoute,
   AdminGamificacaoRoute: AdminGamificacaoRoute,
+  AdminGithubSyncRoute: AdminGithubSyncRoute,
   AdminGovernancaRoute: AdminGovernancaRoute,
   AdminHealthCheckRoute: AdminHealthCheckRoute,
   AdminHeroBannersRoute: AdminHeroBannersRoute,

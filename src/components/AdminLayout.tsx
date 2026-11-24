@@ -130,6 +130,7 @@ const menuGroups = [
       { label: 'Instalar App (PWA)', icon: Smartphone, path: '/admin/pwa' },
       { label: 'Barra Inferior', icon: Smartphone, path: '/admin/barra-inferior' },
       { label: 'Módulos', icon: Blocks, path: '/admin/modulos' },
+      { label: 'Envio para o GitHub', icon: Package, path: '/admin/github-sync' },
       { label: 'Backup & Export', icon: Database, path: '/admin/backup' },
       { label: 'Portabilidade & Migração', icon: Package, path: '/admin/portabilidade' },
       { label: 'Lixeira', icon: Trash2, path: '/admin/lixeira' },

@@ -6,6 +6,29 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { visualizer } from "rollup-plugin-visualizer";
+import { execSync } from "node:child_process";
+
+// Lista local de commits embutida no build para a tela /admin/github-sync.
+// Fora de um checkout Git o build segue normalmente com lista vazia.
+function readLocalCommits(): Array<{ sha: string; message: string; date: string }> {
+  try {
+    const out = execSync("git log -40 --format=%H%x1f%s%x1f%cI", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      timeout: 5000,
+    });
+    return out
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const [sha = "", message = "", date = ""] = line.split("\x1f");
+        return { sha, message: message.slice(0, 160), date };
+      })
+      .filter((c) => /^[0-9a-f]{40}$/.test(c.sha));
+  } catch {
+    return [];
+  }
+}
 
 export default defineConfig({
   tanstackStart: {
@@ -16,6 +39,7 @@ export default defineConfig({
   vite: {
     define: {
       __BUILD_TIMESTAMP__: JSON.stringify(Date.now()),
+      __GIT_LOCAL_COMMITS__: JSON.stringify(readLocalCommits()),
     },
     plugins: [
       // Bundle report opt-in: ANALYZE=1 bun run build → /tmp/bundle-stats.html
