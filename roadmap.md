@@ -2,6 +2,8 @@
 
 ## Rodada 2B — escopo restrito (2026-11-24)
 
+- [x] Ler novamente consumidores relacionados, sete funções atuais e agendamentos diretos; registrar conformidade e limites, sem ampliar correções.
+- [ ] Corrigir lacunas adicionais de recusa de sugestões e avisos de saúde (bloqueio: autorização de escopo; Rodada 2B permite apenas os defeitos comprovados).
 - [x] Identificar a terceira falha nos relatórios existentes: consulta detalhada de auditoria ambígua.
 - [x] Conferir correções locais dos três defeitos e testar apenas a lacuna de privacidade na auditoria de sugestões (seis casos PASS).
 - [x] Entregar tabela PASS/FAIL, IDs históricos disponíveis e leitura da versão pública, sem repetir testes visuais.
