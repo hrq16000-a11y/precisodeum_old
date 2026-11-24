@@ -12,6 +12,8 @@ chmod 700 "$work"
 stage=prepare
 cleanup=NOT_VERIFIED
 replayed=0
+deferred=0
+applied_deferred=0
 failure_file=NONE
 sqlstate=NONE
 outcome=FAIL
@@ -23,16 +25,15 @@ finish() {
   if [ -f "$work/core.json" ]; then
     "${dc[@]}" down --volumes --remove-orphans >"$work/cleanup.log" 2>&1 || rc=1
   fi
-  if docker info >/dev/null 2>&1 &&      test -z "$(docker ps -aq --filter "label=com.docker.compose.project=$project")" &&      test -z "$(docker volume ls -q --filter "label=com.docker.compose.project=$project")" &&      test -z "$(docker network ls -q --filter "name=^$network$")" &&      ! docker container inspect "$project-probe" >/dev/null 2>&1; then
+  if docker info >/dev/null 2>&1 && containers="$(docker ps -aq --filter "label=com.docker.compose.project=$project")" && volumes="$(docker volume ls -q --filter "label=com.docker.compose.project=$project")" && networks="$(docker network ls -q --filter "name=^$network$")" && probes="$(docker ps -aq --filter "name=^/$project-probe$")" && test -z "$containers$volumes$networks$probes" && rm -rf -- "$work" && test ! -e "$work"; then
     cleanup=PASS
   else
     cleanup=FAIL
     rc=1
   fi
   if [ "$rc" != 0 ]; then outcome=FAIL; fi
-  printf '{"scope":"REAL_CORE_WITHOUT_EDGE","commitSha":"%s","stage":"%s","migrationsReplayed":%s,"failedMigration":"%s","sqlState":"%s","core":"%s","cleanup":"%s","fullIntegration":"NOT_EXECUTED","productionApproval":false}\n' "$GITHUB_SHA" "$stage" "$replayed" "$failure_file" "$sqlstate" "$outcome" "$cleanup" > "$evidence/summary.json"
+  printf '{"scope":"REAL_CORE_WITHOUT_EDGE","commitSha":"%s","stage":"%s","replayMode":"QA_DEPENDENCY_ORDER","migrationsReplayed":%s,"deferredStatements":%s,"appliedDeferredStatements":%s,"failedMigration":"%s","sqlState":"%s","core":"%s","cleanup":"%s","fullIntegration":"NOT_EXECUTED","productionApproval":false}\n' "$GITHUB_SHA" "$stage" "$replayed" "$deferred" "$applied_deferred" "$failure_file" "$sqlstate" "$outcome" "$cleanup" > "$evidence/summary.json"
   cat "$evidence/summary.json"
-  rm -rf "$work"
   exit "$rc"
 }
 trap finish EXIT
@@ -80,7 +81,16 @@ for k,v in services.items():
         if vol.get('type')=='bind':
             assert pathlib.Path(vol['source']).resolve().is_relative_to(p.resolve())
         else: assert vol.get('source')=='db-config'
+# Own named volumes, not root-owned bind-mounted data directories.
 vols={'db-config':{'name':network+'-db-config'}}
+for service,target,key in [('db','/var/lib/postgresql/data','pg-data'),('storage','/var/lib/storage','storage-data'),('imgproxy','/var/lib/storage','storage-data')]:
+    matches=[v for v in services[service]['volumes'] if v.get('target')==target]
+    assert len(matches)==1 and matches[0]['type']=='bind'
+    v=matches[0]
+    v['type']='volume'
+    v['source']=key
+    v.pop('bind',None)
+    vols[key]={'name':network+'-'+key}
 (p/'core.json').write_text(json.dumps({'services':services,'networks':{'default':{'name':network,'internal':True}},'volumes':vols}))
 PY
 stage=pull-images
@@ -96,18 +106,71 @@ for service in db auth rest storage imgproxy; do
   docker inspect "$cid" | python3 -c 'import sys,json; d=json.load(sys.stdin)[0]; assert not d["HostConfig"]["PortBindings"]; assert set(d["NetworkSettings"]["Networks"]) == {sys.argv[1]}; assert d["State"]["Running"]' "$network"
 done
 stage=real-migrations
-# Replay each unchanged migration in order; raw DB output stays in the temporary workspace.
-for file in "$root"/supabase/migrations/*.sql; do
-  name="$(basename "$file")"
-  [[ "$name" =~ ^[0-9]{14}_[A-Za-z0-9_-]+\.sql$ ]]
+# QA-only dependency-order reconciliation. Exact historical blobs are verified;
+# no repository migration is edited, skipped wholesale or certified as chronological.
+early=20260401092855_151a7e98-30e0-4d58-ba85-1b072b6c656e.sql
+expand=20260409225549_7915042f-0f37-4f3e-aa52-d6c1917ffa7a.sql
+harden=20260410215419_01cf2709-8d77-42a5-a7dc-d526bf4fb028.sql
+model=20260412063808_9923c009-eb9a-4445-bcba-9738b999867e.sql
+model_harden=20260412063825_6eb83ec5-c8ee-4004-bc2f-06d646252bda.sql
+python3 - "$root/supabase/migrations" "$work" <<'PY'
+import sys,pathlib,hashlib
+src=pathlib.Path(sys.argv[1]); dst=pathlib.Path(sys.argv[2])
+known={
+'20260401092855_151a7e98-30e0-4d58-ba85-1b072b6c656e.sql':'dddaded557ca59b9d5dbc719511cae94b4a50257',
+'20260409225549_7915042f-0f37-4f3e-aa52-d6c1917ffa7a.sql':'79a1ea021e0df64d389c1a0d6621e344a33d0e73',
+'20260410215419_01cf2709-8d77-42a5-a7dc-d526bf4fb028.sql':'ca8a6513be5d557d3441a9ba8a9d4103fd754271',
+'20260412063808_9923c009-eb9a-4445-bcba-9738b999867e.sql':'2d9ba6d63256481e75172441b2766641806d9816',
+'20260412063825_6eb83ec5-c8ee-4004-bc2f-06d646252bda.sql':'55c3def746dc6f4a6bab9448081497d34e7fc32f'}
+for name, expected in known.items():
+    b=(src/name).read_bytes()
+    actual=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+    assert actual==expected, 'historical dependency file changed'
+for name in list(known)[:2]:
+    original=(src/name).read_text()
+    marker='CREATE OR REPLACE VIEW public.account_limits_view AS'
+    assert original.count(marker)==1
+    a,b=original.split(marker)
+    assert b.strip().endswith(';') and b.count(';')==1
+    (dst/(name+'.body')).write_text(a)
+    (dst/(name+'.deferred')).write_text(marker+b)
+name=list(known)[2]
+original=(src/name).read_text()
+lines=['ALTER VIEW IF EXISTS public.account_model_view SET (security_invoker = true);','ALTER VIEW IF EXISTS public.account_limits_view SET (security_invoker = true);']
+for line in lines: assert original.count(line)==1
+(dst/(name+'.body')).write_text(''.join(line for line in original.splitlines(keepends=True) if line.strip() not in lines))
+(dst/(name+'.deferred')).write_text('\n'.join(lines)+'\n')
+PY
+apply_file() {
+  local file="$1" label="$2"
   if ! "${dc[@]}" exec -T db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -v VERBOSITY=verbose --single-transaction < "$file" > "$work/replay.log" 2>&1; then
-    failure_file="$name"
+    failure_file="$label"
     sqlstate="$(sed -nE 's/.*ERROR: *([0-9A-Z]{5}):.*/\1/p' "$work/replay.log" | tail -1)"
     [[ "$sqlstate" =~ ^[0-9A-Z]{5}$ ]] || sqlstate=NONE
     exit 1
   fi
+}
+for file in "$root"/supabase/migrations/*.sql; do
+  name="$(basename "$file")"
+  [[ "$name" =~ ^[0-9]{14}_[A-Za-z0-9_-]+\.sql$ ]]
+  case "$name" in
+    "$early"|"$expand") apply_file "$work/$name.body" "$name"; deferred=$((deferred+1));;
+    "$harden") apply_file "$work/$name.body" "$name"; deferred=$((deferred+2));;
+    *) apply_file "$file" "$name";;
+  esac
   replayed=$((replayed+1))
+  if [[ "$name" == "$model" ]]; then
+    # Both historical definitions are executable now. Reapply the exact
+    # deferred hardening before any application-level verification.
+    test "$deferred" = 4
+    cat "$work/$early.deferred" "$work/$expand.deferred" "$work/$harden.deferred" > "$work/account-views.sql"
+    apply_file "$work/account-views.sql" "$model"
+    applied_deferred=4
+    actual="$("${dc[@]}" exec -T db psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('account_model_view','account_limits_view') AND c.reloptions @> ARRAY['security_invoker=true'];")"
+    test "$actual" = 2
+  fi
 done
+test "$deferred" = 4 && test "$applied_deferred" = 4
 test "$replayed" -gt 0
 # Existing check creates synthetic accounts itself; no legacy or production seed imported.
 "${dc[@]}" restart rest > "$work/restart-rest.log" 2>&1
