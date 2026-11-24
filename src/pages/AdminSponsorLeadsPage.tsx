@@ -1,3 +1,4 @@
+import { csvRow } from '@/lib/csvSafe';
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
@@ -224,7 +225,7 @@ const AdminSponsorLeadsPage = () => {
   const exportCsv = () => {
     const rows = filtered.length > 0 ? filtered : leads;
     const csv = ['Empresa,CNPJ,Email,Telefone,Plano,Status,Contrato Aceito,Data,Notas'].concat(
-      rows.map((l: any) => `"${l.company_name}","${l.cnpj}","${l.email}","${l.phone}","${l.plan}","${l.status}","${l.contract_accepted ? 'Sim' : 'Não'}","${l.created_at}","${(l.notes || '').replace(/"/g, '""')}"`)
+      rows.map((l: any) => csvRow([l.company_name, l.cnpj, l.email, l.phone, l.plan, l.status, l.contract_accepted ? 'Sim' : 'Não', l.created_at, l.notes || '']))
     ).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

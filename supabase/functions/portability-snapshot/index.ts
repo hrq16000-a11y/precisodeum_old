@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       if (error || !snap) throw error ?? new Error("not found");
       const { data: signed, error: sErr } = await admin.storage
         .from("portability")
-        .createSignedUrl(snap.storage_path, 60 * 30); // 30 min
+        .createSignedUrl(snap.storage_path, 60); // 60 s: o link expira logo após o download começar
       if (sErr) throw sErr;
       return new Response(
         JSON.stringify({ url: signed.signedUrl, label: snap.label }),

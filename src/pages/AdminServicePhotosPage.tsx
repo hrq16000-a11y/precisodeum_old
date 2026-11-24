@@ -1,3 +1,4 @@
+import { csvCell } from '@/lib/csvSafe';
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,7 +113,7 @@ export default function AdminServicePhotosPage() {
     const head = 'cidade,bairro,profissional,servico,publica,url';
     const body = filtered.map((r) =>
       [r.city, r.neighborhood, r.provider_name, r.service_name, isPubliclyListed(r) && !broken.has(r.id) ? 'sim' : 'nao', r.image_url]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .map((v) => csvCell(v))
         .join(','),
     );
     const blob = new Blob([[head, ...body].join('\n')], { type: 'text/csv;charset=utf-8' });

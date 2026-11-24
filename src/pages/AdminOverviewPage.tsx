@@ -1,3 +1,4 @@
+import { neutralizeFormula } from '@/lib/csvSafe';
 import { useMemo } from 'react';
 import AdminErrorAlerts from '@/components/admin/AdminErrorAlerts';
 import AdminCriticalAlerts from '@/components/admin/AdminCriticalAlerts';
@@ -245,7 +246,7 @@ const AdminOverviewPage = () => {
               const esc = (v: any) => {
                 if (v === null || v === undefined) return '';
                 const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-                return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+                return /[",\n;]/.test(s) || /^[=+\-@\t\r]/.test(s) ? `"${neutralizeFormula(String(s)).replace(/"/g, '""')}"` : s;
               };
               const headers = ['data', 'staff_email', 'acao', 'alvo_email', 'old_values', 'new_values'];
               const csv = [

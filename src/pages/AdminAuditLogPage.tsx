@@ -1,3 +1,4 @@
+import { neutralizeFormula } from '@/lib/csvSafe';
 import { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -192,7 +193,7 @@ const AdminAuditLogPage = () => {
       const header = ['data', 'usuario', 'user_ref', 'acao', 'recurso', 'recurso_id', 'detalhes'];
       const escape = (v: unknown) => {
         const s = v == null ? '' : typeof v === 'string' ? v : JSON.stringify(v);
-        return `"${s.replace(/"/g, '""')}"`;
+        return `"${neutralizeFormula(String(s)).replace(/"/g, '""')}"`;
       };
       const csv = [
         header.join(','),

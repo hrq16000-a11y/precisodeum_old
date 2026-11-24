@@ -4,6 +4,7 @@
 //
 // Auth: admin JWT, service_role ou x-cron-secret (mesma política do submitter).
 import { authorizeAdminOrCron } from "../_shared/adminOrCronAuth.ts";
+import { ownOrigin, safeRoute } from "../_shared/ownSites.ts";
 
 const DEFAULT_BASE = "https://www.precisodeum.com.br";
 const DEFAULT_PUBLISHER = "ca-pub-3762170279587706";
@@ -95,10 +96,15 @@ Deno.serve(async (req) => {
   if (!authz.ok) return authz.response;
 
   const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-  const base = String(body?.base ?? DEFAULT_BASE).replace(/\/+$/, "");
+  const base = ownOrigin(String(body?.base ?? DEFAULT_BASE));
+  if (!base) {
+    return new Response(JSON.stringify({ error: "base_not_allowed" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const publisher = String(body?.publisher ?? DEFAULT_PUBLISHER);
   const routes: string[] = Array.isArray(body?.routes) && body.routes.length
-    ? body.routes.map(String).slice(0, MAX_ROUTES)
+    ? body.routes.map(String).map(safeRoute).filter((r: string | null): r is string => !!r).slice(0, MAX_ROUTES)
     : DEFAULT_ROUTES;
 
   try {
@@ -107,7 +113,7 @@ Deno.serve(async (req) => {
       const batch = routes.slice(i, i + 4);
       const chunk = await Promise.all(
         batch.map(async (route) => {
-          const url = `${base}${route.startsWith("/") ? route : `/${route}`}`;
+          const url = `${base}${route}`;
           try {
             const res = await fetch(url, {
               headers: { "User-Agent": "precisodeum-adsense-check/1.0" },

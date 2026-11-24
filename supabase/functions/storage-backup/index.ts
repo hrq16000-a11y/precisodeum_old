@@ -218,8 +218,28 @@ Deno.serve(async (req) => {
         );
       }
 
+      const MAX_ZIP_BYTES = 200 * 1024 * 1024;   // 200 MB por arquivo enviado
+      const MAX_ENTRY_BYTES = 25 * 1024 * 1024;  // 25 MB por arquivo interno
+      const MAX_ENTRIES = 5000;
+      const ALLOWED_EXT: Record<string, string> = {
+        jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp",
+        gif: "image/gif", avif: "image/avif", pdf: "application/pdf",
+        mp4: "video/mp4", webm: "video/webm",
+      };
+      if (file.size > MAX_ZIP_BYTES) {
+        return new Response(
+          JSON.stringify({ error: "Arquivo muito grande (máx. 200 MB)" }),
+          { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const arrayBuffer = await file.arrayBuffer();
       const zip = await JSZip.loadAsync(arrayBuffer);
+      if (Object.keys(zip.files).length > MAX_ENTRIES) {
+        return new Response(
+          JSON.stringify({ error: "Arquivos demais no backup" }),
+          { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       let imported = 0;
       let skipped = 0;
@@ -235,6 +255,12 @@ Deno.serve(async (req) => {
 
         if (!BUCKETS.includes(bucketId)) {
           errors.push(`Bucket desconhecido: ${bucketId}`);
+          continue;
+        }
+        const ext = (filePath.split(".").pop() ?? "").toLowerCase();
+        const contentType = ALLOWED_EXT[ext];
+        if (!contentType || filePath.includes("..")) {
+          errors.push(`${bucketId}/${filePath}: tipo de arquivo não permitido`);
           continue;
         }
 
@@ -254,11 +280,15 @@ Deno.serve(async (req) => {
         }
 
         const content = await (zipEntry as any).async("uint8array");
-        const blob = new Blob([content]);
+        if (content.byteLength > MAX_ENTRY_BYTES) {
+          errors.push(`${bucketId}/${filePath}: arquivo muito grande`);
+          continue;
+        }
+        const blob = new Blob([content], { type: contentType });
 
         const { error: uploadError } = await adminClient.storage
           .from(bucketId)
-          .upload(filePath, blob, { upsert: mode === "replace" });
+          .upload(filePath, blob, { upsert: mode === "replace", contentType });
 
         if (uploadError) {
           errors.push(`${bucketId}/${filePath}: ${uploadError.message}`);

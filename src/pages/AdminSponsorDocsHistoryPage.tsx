@@ -1,3 +1,4 @@
+import { neutralizeFormula } from '@/lib/csvSafe';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
@@ -102,12 +103,12 @@ export default function AdminSponsorDocsHistoryPage() {
     const lines = filtered.map((r) =>
       [
         format(new Date(r.created_at), 'dd/MM/yyyy HH:mm'),
-        `"${(r.company_name || '').replace(/"/g, '""')}"`,
+        `"${neutralizeFormula(r.company_name || '').replace(/"/g, '""')}"`,
         `"${r.email || ''}"`,
         TYPE_LABEL[r.doc_type] || r.doc_type,
         ACTION_LABEL[r.action] || r.action,
         r.status || '',
-        `"${(r.reason || '').replace(/"/g, '""')}"`,
+        `"${neutralizeFormula(r.reason || '').replace(/"/g, '""')}"`,
       ].join(',')
     );
     const blob = new Blob(['\ufeff' + [header, ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });

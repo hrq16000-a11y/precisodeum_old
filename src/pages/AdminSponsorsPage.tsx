@@ -1,3 +1,4 @@
+import { csvRow } from '@/lib/csvSafe';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/AdminLayout';
@@ -149,7 +150,7 @@ function exportSponsorsCsv(sponsors: Sponsor[], metricsMap: Map<string, { imp: n
       String(h.score),
     ];
   });
-  const csv = bom + [header, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const csv = bom + [header, ...rows].map(r => csvRow(r)).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

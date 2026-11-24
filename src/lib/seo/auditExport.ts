@@ -9,6 +9,7 @@
  * Camada pura — a UI só monta o input e dispara o download.
  */
 
+import { neutralizeFormula } from '@/lib/csvSafe';
 import type { AdsenseRouteReport } from "./adsenseCheck";
 import type { GscCoverageSnapshot, SitemapSubmissionSummary } from "./gscSubmissions";
 import type { GscMetrics } from "./gscMetrics";
@@ -160,7 +161,7 @@ export function consolidatedAuditToJson(audit: ConsolidatedAudit): string {
 
 const esc = (value: unknown): string => {
   const s = value === null || value === undefined ? "" : String(value);
-  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  return /[",\n;]/.test(s) || /^[=+\-@\t\r]/.test(s) ? `"${neutralizeFormula(String(s)).replace(/"/g, '""')}"` : s;
 };
 
 /**

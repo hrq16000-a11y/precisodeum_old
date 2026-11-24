@@ -29,6 +29,13 @@
       "when": 1795540986629,
       "tag": "0003_relax_provider_coordinates_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795541869823,
+      "tag": "0004_harden_insert_status_and_sponsor_claim",
+      "breakpoints": true
     }
   ]
 }

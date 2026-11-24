@@ -1,3 +1,4 @@
+import { neutralizeFormula } from '@/lib/csvSafe';
 import type { LeadRow, LeadHistoryEntry } from '@/hooks/useLeadFollowup';
 import { STATUS_META } from '@/hooks/useLeadFollowup';
 
@@ -10,8 +11,8 @@ const fmtDate = (iso?: string | null) => {
 
 const csvEscape = (v: unknown): string => {
   if (v == null) return '';
-  const s = String(v).replace(/\r?\n/g, ' ').trim();
-  if (/[",;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  const s = neutralizeFormula(String(v).replace(/\r?\n/g, ' ').trim());
+  if (/[",;']/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 };
 

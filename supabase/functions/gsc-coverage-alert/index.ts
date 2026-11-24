@@ -7,6 +7,7 @@
 //
 // Auth: admin JWT, service_role ou x-cron-secret (fail-closed).
 import { authorizeAdminOrCron } from "../_shared/adminOrCronAuth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,7 +124,20 @@ Deno.serve(async (req) => {
     body.dashboardUrl ?? "https://www.precisodeum.com.br/admin/seo?tab=submissoes",
   );
   const dryRun = body.dryRun === true;
-  const email = typeof body.email === "string" && body.email.includes("@") ? body.email : null;
+  const requestedEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  // Só envia para e-mails de administradores do portal (nunca para terceiros).
+  let email: string | null = null;
+  if (requestedEmail.includes("@")) {
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: roles } = await admin.from("user_roles").select("user_id").eq("role", "admin");
+    const ids = (roles ?? []).map((r: { user_id: string }) => r.user_id);
+    if (ids.length) {
+      const { data: profs } = await admin.from("profiles").select("email").in("id", ids);
+      const allowed = new Set((profs ?? []).map((p: { email: string | null }) => (p.email ?? "").toLowerCase()));
+      if (allowed.has(requestedEmail)) email = requestedEmail;
+    }
+    if (!email) return json({ error: "email_not_allowed" }, 400);
+  }
   const wantSlack = body.slack !== false;
 
   const slackWebhook = Deno.env.get("GSC_ALERT_SLACK_WEBHOOK") ?? Deno.env.get("SLACK_WEBHOOK_URL");

@@ -1,3 +1,4 @@
+import { csvCell } from '@/lib/csvSafe';
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Download, Loader2, Save, Sparkles, Users } from 'lucide-react';
@@ -193,7 +194,7 @@ const AdminCategoryOpportunitiesPage = () => {
       ? filteredLeads.filter((l: any) => selectedLeads.includes(l.id))
       : filteredLeads;
     const cols = ['created_at', 'category_slug', 'category_name', 'kind', 'name', 'phone', 'email', 'city', 'message', 'status'];
-    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const esc = (v: unknown) => csvCell(v ?? '');
     const csv = [cols.join(','), ...rows.map((l: any) => cols.map((c) => esc(l[c])).join(','))].join('\n');
     const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }));
     const a = document.createElement('a');

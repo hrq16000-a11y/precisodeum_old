@@ -2,6 +2,7 @@
 // Actions: status | get-token | verify | add | list | list-sitemaps | submit-sitemap | delete-sitemap
 // Auth: admin only (JWT validado + has_role('admin')).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isOwnGscProperty, isOwnUrl } from "../_shared/ownSites.ts";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 
@@ -103,6 +104,11 @@ Deno.serve(async (req) => {
   const sitemap =
     url.searchParams.get("sitemap") ?? "https://www.precisodeum.com.br/sitemap.xml";
   const triggered_by = callerId(req);
+  if (!isOwnGscProperty(site) || !isOwnUrl(sitemap)) {
+    return new Response(JSON.stringify({ error: "site_not_allowed" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   // Auth: admin only. Nenhuma ação (nem leitura) fica exposta a usuários comuns.
   {

@@ -1,3 +1,4 @@
+import { csvRow } from '@/lib/csvSafe';
 import { useState, useEffect, useMemo, useCallback, memo, lazy, Suspense } from 'react';
 import { useSearchParams } from '@/lib/router-compat';
 import { ShieldAlert } from 'lucide-react';
@@ -719,7 +720,7 @@ const AdminUsersPage = () => {
 
   // ── Metrics exports ──
   const downloadCsv = (filename: string, headers: string[], rows: (string | number | null | undefined)[][]) => {
-    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => csvRow(r)).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -745,7 +746,7 @@ const AdminUsersPage = () => {
     retentionData.forEach(r => lines.push([r.month, String(r.total), String(r.ativos), String(r.inativos), String(r.novos), r.retentionRate + '%']));
     const maxCols = Math.max(...lines.map(l => l.length));
     const padded = lines.map(l => [...l, ...Array(maxCols - l.length).fill('')]);
-    const csv = padded.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = padded.map(r => csvRow(r)).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

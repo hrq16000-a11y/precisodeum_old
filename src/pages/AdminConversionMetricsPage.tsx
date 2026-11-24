@@ -1,3 +1,4 @@
+import { neutralizeFormula } from '@/lib/csvSafe';
 import { useEffect, useMemo, useState } from 'react';
 import { TrendingUp, Users, Eye, MessageCircle, Target, X as XIcon, Filter, Download } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
@@ -119,7 +120,7 @@ const AdminConversionMetricsPage = () => {
     const escape = (v: unknown) => {
       const s = String(v ?? '');
       // RFC 4180 + delimitador ; comum em PT-BR — escapamos ambos
-      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      return /[",\n;]/.test(s) || /^[=+\-@\t\r]/.test(s) ? `"${neutralizeFormula(String(s)).replace(/"/g, '""')}"` : s;
     };
     const generatedAt = new Date().toISOString();
     const csv = [

@@ -187,7 +187,10 @@ Deno.serve(async (req) => {
           const ownsViaPath =
             path.startsWith(`${user.id}/`) ||
             (!!profile?.user_ref && path.startsWith(`${profile.user_ref}/`));
-          if (!ownsViaMedia && !ownsViaPath) {
+          // A linha em media é gravável pelo próprio usuário e pode apontar
+          // para arquivo de terceiros; só a pasta do arquivo prova a posse.
+          void ownsViaMedia;
+          if (!ownsViaPath) {
             console.warn("[optimize-image] forbidden path optimize", { user: user.id, bucket });
             return jsonResponse({ error: "Forbidden" }, 403);
           }

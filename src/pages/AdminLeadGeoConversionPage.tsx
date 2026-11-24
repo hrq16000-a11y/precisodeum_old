@@ -1,3 +1,4 @@
+import { neutralizeFormula } from '@/lib/csvSafe';
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -138,7 +139,7 @@ const AdminLeadGeoConversionPage = () => {
   const exportCsv = () => {
     const lines = [['dimensao', 'valor', 'leads', 'convertidos'].join(',')];
     const push = (dim: string, list: Bucket[]) =>
-      list.forEach((b) => lines.push([dim, `"${b.key.replace(/"/g, '""')}"`, b.total, b.converted].join(',')));
+      list.forEach((b) => lines.push([dim, `"${neutralizeFormula(String(b.key)).replace(/"/g, '""')}"`, b.total, b.converted].join(',')));
     push('cidade', cityBuckets);
     push('bairro', hoodBuckets);
     push('categoria', categoryBuckets);

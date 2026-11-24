@@ -1,3 +1,4 @@
+import { csvRow } from '@/lib/csvSafe';
 import { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -155,7 +156,7 @@ const AdminReviewsPage = () => {
   const handleExport = () => {
     const csvHeader = 'Autor,Email,Prestador,Nota,Qualidade,Pontualidade,Atendimento,Comentário,Status,Data\n';
     const csvRows = filtered.map(r =>
-      `"${(r.profiles as any)?.full_name || ''}","${(r.profiles as any)?.email || ''}","${(r.providers as any)?.business_name || ''}","${r.rating}","${r.quality_rating}","${r.punctuality_rating}","${r.service_rating}","${(r.comment || '').replace(/"/g, '""')}","${r.approval_status || 'pending'}","${r.created_at}"`
+      csvRow([(r.profiles as any)?.full_name || '', (r.profiles as any)?.email || '', (r.providers as any)?.business_name || '', r.rating, r.quality_rating, r.punctuality_rating, r.service_rating, r.comment || '', r.approval_status || 'pending', r.created_at])
     ).join('\n');
     const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

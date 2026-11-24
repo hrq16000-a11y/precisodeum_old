@@ -1,3 +1,4 @@
+import { csvCell } from '@/lib/csvSafe';
 import { useState, useCallback } from 'react';
 import CategoryIcon from '@/components/CategoryIcon';
 import AdminLayout from '@/components/AdminLayout';
@@ -117,8 +118,7 @@ const toCsv = (data: any[]): string => {
       headers.map(h => {
         const v = row[h];
         if (v === null || v === undefined) return '';
-        const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-        return `"${s.replace(/"/g, '""')}"`;
+        return csvCell(v);
       }).join(',')
     ),
   ].join('\n');

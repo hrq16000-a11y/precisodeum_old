@@ -1,3 +1,4 @@
+import { csvRow } from '@/lib/csvSafe';
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logAuditAction } from './useAuditLog';
@@ -140,9 +141,7 @@ export const useAdminBulkActions = ({ table, resourceType, onComplete }: BulkCon
     const csv = [
       Object.keys(selected[0]).join(','),
       ...selected.map(item =>
-        Object.values(item).map(v =>
-          typeof v === 'string' ? `"${v.replace(/"/g, '""')}"` : String(v ?? '')
-        ).join(',')
+        csvRow(Object.values(item))
       ),
     ].join('\n');
 

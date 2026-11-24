@@ -1,3 +1,4 @@
+import { csvRow } from '@/lib/csvSafe';
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import AdminLayout from '@/components/AdminLayout';
@@ -328,7 +329,7 @@ const AdminProvidersPage = () => {
     const csvHeader = 'Nome,Email,Empresa,Cidade,Estado,CNPJ,Categoria,Status,Serviços,Álbuns,Nota,Avaliações,Criado em\n';
     const source = bulk.selectedIds.size > 0 ? filtered.filter(p => bulk.selectedIds.has(p.id)) : filtered;
     const csvRows = source.map(p =>
-      `"${p.profiles?.full_name || ''}","${p.profiles?.email || ''}","${p.business_name || ''}","${p.city || ''}","${p.state || ''}","${p.cnpj || ''}","${(p.categories as any)?.name || ''}","${p.status}","${p.services_count}","${p.portfolio_album_count}","${p.rating_avg?.toFixed(1)}","${p.review_count}","${p.created_at || ''}"`
+      csvRow([p.profiles?.full_name || '', p.profiles?.email || '', p.business_name || '', p.city || '', p.state || '', p.cnpj || '', (p.categories as any)?.name || '', p.status, p.services_count, p.portfolio_album_count, p.rating_avg?.toFixed(1), p.review_count, p.created_at || ''])
     ).join('\n');
     const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

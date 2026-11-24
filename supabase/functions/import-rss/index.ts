@@ -144,6 +144,21 @@ function extractArticleImages(html: string): string[] {
   return images;
 }
 
+function baseDomain(host: string): string {
+  const parts = host.toLowerCase().split(".");
+  // domínios .com.br etc. usam três rótulos
+  const n = parts.length >= 3 && parts[parts.length - 1].length === 2 && parts[parts.length - 2].length <= 3 ? 3 : 2;
+  return parts.slice(-n).join(".");
+}
+
+/** Só baixa artigos do mesmo site do feed permitido. */
+function isSameSiteAsFeed(urlStr: string, feedUrl: string): boolean {
+  if (!isUrlSafe(urlStr)) return false;
+  try {
+    return baseDomain(new URL(urlStr).hostname) === baseDomain(new URL(feedUrl).hostname);
+  } catch { return false; }
+}
+
 async function scrapeArticle(url: string): Promise<ScrapedArticle> {
   try {
     const controller = new AbortController();
@@ -151,7 +166,7 @@ async function scrapeArticle(url: string): Promise<ScrapedArticle> {
 
     const resp = await fetch(url, {
       headers: { "User-Agent": BOT_UA, Accept: "text/html,application/xhtml+xml" },
-      redirect: "follow",
+      redirect: "manual",
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -304,7 +319,9 @@ async function importFeed(feedUrl: string, maxItems: number, supabaseUrl: string
       // resolveGoogleNewsUrl is done inside scrapeArticle via redirect follow
     }
 
-    const scraped = await scrapeArticle(targetUrl);
+    const scraped = isSameSiteAsFeed(targetUrl, feedUrl)
+      ? await scrapeArticle(targetUrl)
+      : { image: null, description: null, fullContent: null, finalUrl: targetUrl };
     const realUrl = scraped.finalUrl || targetUrl;
 
     // Cover image: RSS media → scraped OG/body
@@ -383,7 +400,7 @@ serve(async (req) => {
 
     const feedsToImport = isAutomated
       ? ALLOWED_AUTO_FEEDS.filter((url) => !feedUrl || url === feedUrl)
-      : feedUrl ? [feedUrl] : [];
+      : (ALLOWED_AUTO_FEEDS as readonly string[]).includes(feedUrl) ? [feedUrl] : [];
 
     if (feedsToImport.length === 0) {
       return new Response(JSON.stringify({ error: "feed_url inválida ou não permitida" }), {

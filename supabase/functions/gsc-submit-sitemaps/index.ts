@@ -12,6 +12,7 @@
 //   { site, property, environment: 'prod'|'staging'|'dev', dryRun, validateOnly, skipInvalid }
 import { authorizeAdminOrCron } from "../_shared/adminOrCronAuth.ts";
 import { isLocalEnv, mockExternalCall } from "../_shared/localEnv.ts";
+import { isOwnGscProperty, isOwnUrl, ownOrigin } from "../_shared/ownSites.ts";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
 const DEFAULT_SITE = "https://www.precisodeum.com.br/";
@@ -134,7 +135,7 @@ export function extractSitemapLocs(xml: string): string[] {
   const locs = Array.from(xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)).map((m) =>
     m[1].replace(/&amp;/g, "&").trim(),
   );
-  return Array.from(new Set(locs));
+  return Array.from(new Set(locs)).filter((l) => isOwnUrl(l));
 }
 
 
@@ -282,6 +283,9 @@ Deno.serve(async (req) => {
   const skipInvalid = body.skipInvalid !== false; // default: pula partições inválidas
   const origin = site.replace(/\/+$/, "");
   const indexUrl = String(body.sitemapIndex ?? `${origin}/sitemap.xml`);
+  if (!ownOrigin(origin) || !isOwnUrl(indexUrl) || (overrideProperty && !isOwnGscProperty(overrideProperty))) {
+    return json({ error: "site_not_allowed" }, 400);
+  }
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const GSC = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
