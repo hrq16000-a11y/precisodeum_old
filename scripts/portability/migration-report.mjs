@@ -76,9 +76,13 @@ const failures =
   (coverage.download_errors ?? 0)
   + (restore?.report?.errors ?? 0)
   + (validation?.report?.files_failed ?? 0);
+const evidenceComplete = restore?.report?.ok === true && restore.report.dry_run === false &&
+  restored === exported && validation?.report?.ok === true &&
+  validation.report.files_expected === exported;
 
 const summary = {
-  ok: failures === 0 && orphans === 0 && exported > 0 && verified === exported,
+  ok: evidenceComplete && failures === 0 && orphans === 0 && exported > 0 && verified === exported,
+  evidence_complete: evidenceComplete,
   bundle: basename(bundleFile),
   generated_at: new Date().toISOString(),
   media_exported: exported,
