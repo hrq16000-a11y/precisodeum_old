@@ -22,6 +22,13 @@
       "when": 1795472265687,
       "tag": "0002_remove_dynamic_sql_from_definer_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795540986629,
+      "tag": "0003_relax_provider_coordinates_guard",
+      "breakpoints": true
     }
   ]
 }
