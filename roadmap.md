@@ -5,7 +5,7 @@
 - [x] Ler novamente consumidores relacionados, sete funções atuais e agendamentos diretos; registrar conformidade e limites, sem ampliar correções.
 - [x] Corrigir e testar localmente recusa de sugestões sem texto de origem na auditoria e avisos de saúde sem sucesso após falha de histórico (autorizado em 2026-11-24; sem publicação ou alteração de registros concluídos).
 - [x] Reler consumidores e rotinas dos dois fluxos; registrar diagnósticos independentes afetados sem corrigir fora do escopo autorizado.
-- [ ] Corrigir falsos estados saudáveis nos diagnósticos independentes identificados (bloqueio: autorização adicional; não pertencem ao fluxo de histórico de saúde corrigido).
+- Diagnósticos independentes: fora do escopo por decisão do usuário em 2026-11-24; manter intactos, sem tarefa de correção autorizada.
 - [x] Identificar a terceira falha nos relatórios existentes: consulta detalhada de auditoria ambígua.
 - [x] Conferir correções locais dos três defeitos e testar apenas a lacuna de privacidade na auditoria de sugestões (seis casos PASS).
 - [x] Entregar tabela PASS/FAIL, IDs históricos disponíveis e leitura da versão pública, sem repetir testes visuais.
