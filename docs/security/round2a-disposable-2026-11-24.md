@@ -1,5 +1,89 @@
 # Preciso de Um 360° — Rodada 2A
 
+## Complemento 2A.1 — evidências e limpeza (2026-11-24)
+
+**GO para continuidade da infraestrutura; NO-GO para integração completa e
+publicação.** Este complemento atualiza o relatório existente, sem duplicá-lo.
+Não iniciou 2B, scan, alterações em produção, migrações históricas ou testes do PDF.
+
+### Melhorias implementadas
+
+- Identificadores exclusivos por execução em projeto CLI/rede/diretório/JSON;
+  relatório estruturado com SHA, workflow/run/attempt, tempo/versões/etapas,
+  dependências ausentes, testes aprovados/reprovados/não executados, baseline,
+  SQL candidato, migrations anunciada/falha identificada, limpeza e decisão.
+- Subprocessos assíncronos com grupo de processos controlado, saída limitada
+  em memória e nunca publicada. SIGINT/SIGTERM acionam encerramento; SIGKILL e
+  encerramento sem verificação nunca certificam limpeza.
+- Inventários Docker antes/depois, exclusão apenas de nomes do projeto exclusivo
+  da execução e rede exata; verificação de arquivos/configuração/credenciais e
+  processos locais com proteção contra PID reutilizado de outro projeto.
+- Manifesto sanitizado persistido e `--cleanup` na etapa final `always()` do
+  workflow existente; preserva recursos removidos e tentativas de limpeza.
+- Artefatos por run/attempt mesmo em falha, sem segredos/SQL/logs brutos; resumo
+  legível no GitHub Step Summary. PASS da infraestrutura não homologa negócio.
+
+### Testes e artefatos
+
+| Evidência | Resultado |
+| --- | --- |
+| Vitest de isolamento + ciclo de vida | PASS: 14 testes (3 existentes + 11 novos) |
+| Falha intermediária/recursos residuais/Docker indisponível/escopo inválido/cleanup idempotente | PASS em adaptadores; não é integração Docker |
+| SIGTERM real durante CLI start MOCK | PASS: candidato não aplicado, baseline não executado, arquivos/processos encerrados; integração não certificada |
+| Sintaxe Node e diff | PASS |
+| Execução real do orquestrador sem Docker | Interrompe com código 1/NO-GO; Docker ausente; 14 checks de baseline/candidato NÃO EXECUTADOS |
+| Arquivos temporários locais | Diretório da execução removido, conferido no filesystem |
+| Limpeza Docker completa | NÃO COMPROVADA: inventários inicial/final indisponíveis; relatório FAIL, inclusive na etapa final |
+| Workflow real GitHub | PENDENTE: destino/SHA/workflow não confirmados, nenhum run disparado |
+
+Artefatos locais ignorados pelo Git: `test-results/disposable-stack/local-2a1-verification-state.json`
+e `local-2a1-verification-summary.json`. Execução completa produzirá também
+`<execução>-baseline.json` e `<execução>-candidate.json`; ausências/skips ficam
+explícitos no summary. JSONs sintéticos do teste de sinais são removidos para
+não se misturarem à evidência do workflow real.
+
+### GitHub e próxima ação mínima
+
+A conexão **Henrique's GitHub API** respondeu HTTP 200 à pesquisa. Foram
+encontrados `hrq16000-a11y/precisodeum_old`, `hrq16000-a11y/precisodeum_n` e
+`hrq16000/precisodeumtecnico_2026`, todos com branch padrão `main`.
+O commit anterior `231369e31c2392d217f33cab3b2685193b73471e` retornou HTTP 404
+nos três; o workflow retornou HTTP 404 no legado. Esses 404 não comprovam,
+isoladamente, ausência de permissão ou inexistência absoluta do recurso.
+O remote local é armazenamento interno, não prova vínculo com um desses
+repositórios. Não escolher destino por semelhança de nome; pergunta enviada.
+
+Após confirmar o repositório e sincronizar o novo candidato em `main`:
+
+```bash
+# No GitHub/Codex autenticado; substituir OWNER/REPO pelo destino confirmado.
+gh api repos/OWNER/REPO/git/ref/heads/main --jq .object.sha
+gh workflow run disposable-stack.yml --repo OWNER/REPO --ref main
+gh run list --repo OWNER/REPO --workflow disposable-stack.yml --limit 1
+# Observar o run correspondente ao SHA, ler Step Summary e baixar seus artefatos.
+```
+
+O novo commit candidato é aquele que contém este complemento; SHA exato
+informado após o commit. Não há execução remota simulada nem publicação.
+
+### Arquitetura documentada, não implementada
+
+Roadmap consolidado preserva 2A.1→2A.2→2B→2C→2D, 3A/3B/4A e 5A–5D:
+Policy Lineage com snapshots/contratos/controle administrativo somente leitura;
+modularização incremental **TanStack Start**, sem impor App.tsx ou trocar o
+roteador; índice de cidades já usa shell dinâmico e precisa de medições antes
+de nova otimização; Web Vitals por rota/versão. Não há rota Policy Lineage
+dedicada encontrada; os módulos de governança existentes precisam ser avaliados
+antes de criar outro. Release de segurança não depende dessas futuras melhorias.
+
+### Arquivos desta micro-rodada
+
+`.github/workflows/disposable-stack.yml`, `scripts/security/disposable-stack.mjs`,
+`scripts/security/disposable-lifecycle.mjs`, `scripts/security/disposable-lifecycle.d.mts`,
+`tests/security/disposable/verify-stack.mjs`, `src/test/disposable-stack-lifecycle.test.ts`,
+`LOCAL_SETUP.md`, `AGENTS.md`, `roadmap.md` e este relatório. Guards, fixtures,
+probe MOCK, seed, migrations e correção do PDF preservados.
+
 ## Objetivo e decisão
 
 Preparar integração descartável funcional reutilizando histórico, seed e SQL

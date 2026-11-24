@@ -1,5 +1,21 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Roteiro 360° consolidado — Rodada 2A.1
+
+- [x] 2A.1: complementar orquestrador existente com evidências por execução, estados NÃO EXECUTADO, limpeza por escopo e etapa final always; testar falhas parciais sem simular integração aprovada.
+- [ ] 2A.2: executar o workflow existente em Linux/GitHub com Docker; depende de 2A.1 e confirmação/sincronização do repositório associado. API GitHub acessível, mas SHA anterior retornou 404 nos três repositórios encontrados e workflow retornou 404 no legado; destino aguardando resposta, nenhuma execução remota disparada.
+- [ ] 2B: segurança funcional/auditoria de aprovação, sugestões e relatório; depende de baseline descartável completo. Depois: patrocinadores, campos administrativos, fotos, links privados, CSV, concorrência/atomicidade/persistência; não iniciar em paralelo agora.
+- [ ] 2C: cadastro E2E mobile automatizado; depende de segurança funcional.
+- [ ] 2D: publicar release de segurança com gates aprovados, autorização específica para banco real e correspondência commit/deployment; não depende de 5A/5B/5C, WhatsApp ou SEO.
+- [ ] 3A: tracking e conversões; depende de modelo de eventos validado.
+- [ ] 3B: WhatsApp oficial; depende de consentimento e autorização de integração.
+- [ ] 4A: SEO regional e sitemap; depende de estrutura pública validada.
+- [ ] 5A: Policy Lineage/contracts; primeiro verificar equivalentes de governança existentes; snapshots sanitizados versionados pelo CI (schema/RLS/grants/RPC/Storage/migration/SHA/data/origem), comparações e contratos vinculados a testes. Aceite: painel admin somente leitura, sem segredos/PII/edição de políticas/migrations automáticas ou funções privilegiadas no frontend; PASS/FAIL/NÃO TESTADO/INCOMPATIBILIDADE POTENCIAL distinguem evidência de declaração. `/admin/policy-lineage` é apenas sugestão, não nova rota nesta rodada.
+- [ ] 5B: manutenção incremental de rotas TanStack Start existentes (não criar App.tsx nem substituir roteador); inventariar rotas/dependências/baseline, um domínio por vez, medir bundle e lazy loading real. Aceite: URLs, params/query strings, redirects, auth/guards/layouts/providers, permissões, SEO/404/links/navegação mobile/dashboards preservados, sem mudar negócio.
+- [ ] 5C: medir índice de cidades antes de otimizar; já existe shell dinâmico `citiesIndex.ts` sobre `citiesIndexData.ts`, não reconstruir. Baseline bruto/comprimido, import chain/consumidores/bundle inicial/download/processamento/LCP/FCP/TBT/requisições. Avaliar dynamic por rota → JSON versionado → UF/região → busca sob demanda → endpoint existente → SSR compatível, sem requisição bloqueante ou nova infraestrutura. Aceite: comparação equivalente antes/depois, JS inicial e LCP medidos, cadastro/busca 390px/conexão lenta/fallback/SEO indexável/cidades/bairros/URLs/sitemap/canonicals/links preservados.
+- [ ] 5D: Web Vitals por rota e versão; depende de telemetria validada, reutilizar ferramentas existentes.
+- Melhorias administrativas preservadas sem reinício: gestão de anúncios, aprovação de patrocinadores, classificação de vagas, gestão de fotos, auditoria responsiva, impressões/cliques, conversões, Search Console e páginas de cidades/bairros; homologação populada permanece dependente dos gates acima.
+
 ## Roteiro 360° — Rodada 2A (2026-11-24)
 
 - [x] Identificar ausência de Docker/socket e preparar alternativa no GitHub Actions com cópia temporária de migrations/seed, rede interna e cleanup; configuração validada com CLI 2.121.0.

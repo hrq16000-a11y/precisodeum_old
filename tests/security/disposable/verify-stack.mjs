@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import pg from 'pg';
 import { assertLoopback } from '../../../scripts/security/disposable-guards.mjs';
+import { CHECKS } from '../../../scripts/security/disposable-lifecycle.mjs';
 
 const [statusPath, outputPath] = process.argv.slice(2);
 const status = JSON.parse(readFileSync(statusPath, 'utf8'));
@@ -99,6 +100,7 @@ try {
   process.exitCode = 1;
 } finally {
   await db.end().catch(() => {});
-  writeFileSync(outputPath, JSON.stringify({ synthetic: true, checks: results, complete: results.length === 7 && results.every(r => r.result === 'PASS'), businessApprovalCertified: false }, null, 2));
+  const checks = CHECKS.map(check => results.find(result => result.check === check) ?? { check, result: 'NOT_EXECUTED' });
+  writeFileSync(outputPath, JSON.stringify({ synthetic: true, checks, complete: checks.every(r => r.result === 'PASS'), businessApprovalCertified: false }, null, 2));
   // Entire disposable stack is deleted by the parent, including users/files.
 }

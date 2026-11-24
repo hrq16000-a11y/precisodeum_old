@@ -43,6 +43,35 @@ node scripts/security/disposable-stack.mjs --candidate
   GitHub/local. Workflow criado não significa workflow executado; PASS de
   infraestrutura nunca libera publicação ou migração em produção.
 
+### Rodada 2A.1 — evidência e limpeza por execução
+
+- Reutiliza o mesmo workflow/orquestrador. Identificador exclusivo por run/attempt
+  gera projeto CLI, rede, diretório temporário e artefatos independentes; não usa
+  limpeza global. Arquivos de configuração e credenciais sintéticas ficam em `/tmp`.
+- Relatório `test-results/disposable-stack/<execução>-summary.json`: SHA,
+  workflow/run/attempt, início/fim/duração, versões, dependências ausentes,
+  etapas, testes PASS/FAIL/NOT_EXECUTED, baseline/candidato e limpeza com recursos
+  criados/removidos/residuais. Última migration anunciada é distinta da falha
+  identificada; nenhuma delas é inferida de conteúdo SQL sensível.
+- Manifesto `<execução>-state.json` contém apenas escopo local e identificadores
+  de processos, nunca credenciais; subprocessos não emitem seus logs brutos.
+- SIGINT/SIGTERM interrompem a execução e acionam limpeza. SIGKILL, crash do host
+  ou cancelamento sem etapa final não comprovam limpeza; ausência de inventário
+  ou manifesto mantém NO-GO. A etapa final `always()` repete a verificação do
+  mesmo escopo e preserva o histórico de tentativas/recursos removidos.
+- Testes direcionados: `bunx vitest run src/test/disposable-stack-guards.test.ts
+  src/test/disposable-stack-lifecycle.test.ts`. Sinal/processos usam CLI/Docker
+  **MOCK**; não certificam integração real.
+- Recuperação final no mesmo runner: `DISPOSABLE_EXECUTION_ID=<id-do-run>
+  node scripts/security/disposable-stack.mjs --cleanup`. Não reutilizar ID de
+  outro run, não remover recursos por comandos globais e não executar o candidato
+  em produção.
+- Continuidade GitHub/Codex: confirmar repositório associado e branch `main`,
+  sincronizar o commit candidato pelos mecanismos existentes e executar
+  `gh workflow run disposable-stack.yml --repo OWNER/REPO --ref main` somente
+  após confirmar que o SHA candidato e o workflow existem nessa branch. Ler o
+  run e artefatos `disposable-backend-evidence-<run>-<attempt>`; não presumir PASS.
+
 ---
 
 ## 1. Pré-requisitos

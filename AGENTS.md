@@ -22,3 +22,4 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Health success requires a complete current read and confirmed history persistence; recovery notifications follow the history write so unavailable evidence cannot certify recovery.
 - Lead print reports escape every externally supplied text interpolation before document writing, including profile names and URL-derived filters, so exporting cannot execute user-supplied code.
 - Full backend integration runs in a temporary CLI project with unchanged historical migrations, loopback-only targets, scrubbed inherited credentials and fail-closed JSON evidence; a runtime mock or infrastructure PASS never certifies business approval or a production release.
+- Disposable CI runs use per-execution project/resource identifiers and a persisted sanitized manifest; scoped inventories and process/file verification, including an always-run cleanup, are required before cleanup can pass.

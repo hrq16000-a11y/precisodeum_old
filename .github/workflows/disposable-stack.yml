@@ -9,6 +9,7 @@ on:
       - 'scripts/security/**'
       - 'tests/security/**'
       - 'src/test/disposable-stack-guards.test.ts'
+      - 'src/test/disposable-stack-lifecycle.test.ts'
       - '.github/workflows/disposable-stack.yml'
   workflow_dispatch:
 
@@ -23,6 +24,8 @@ jobs:
   isolated-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      DISPOSABLE_EXECUTION_ID: preciso-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,14 +37,17 @@ jobs:
         with:
           version: 2.121.0
       - name: Isolation guard regressions
-        run: bunx vitest run src/test/disposable-stack-guards.test.ts
+        run: bunx vitest run src/test/disposable-stack-guards.test.ts src/test/disposable-stack-lifecycle.test.ts
       - name: Replay real schema and check local services, then local candidate
         run: node scripts/security/disposable-stack.mjs --candidate
+      - name: Verify current-run cleanup even after failure
+        if: always()
+        run: node scripts/security/disposable-stack.mjs --cleanup
       - name: Upload sanitized evidence (also on failure)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: disposable-backend-evidence
+          name: disposable-backend-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: test-results/disposable-stack/*.json
           retention-days: 7
           if-no-files-found: error
