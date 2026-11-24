@@ -151,11 +151,12 @@ try {
       config += '\n[functions.runtime-probe]\nverify_jwt = false\n';
       writeFileSync(configPath, config, { mode: 0o600 });
       state.resources.push('temporary-config'); persist();
-      cpSync(join(root, 'supabase/migrations'), join(state.workspace, 'supabase/migrations'), { recursive: true });
-      cpSync(join(root, 'supabase/seed.sql'), join(state.workspace, 'supabase/seed.sql'));
+      // Bootstrap the generated local stack without project migrations or seed.
+      // Copy the complete original history only after loopback status is verified.
+      mkdirSync(join(state.workspace, 'supabase/migrations'), { recursive: true });
       cpSync(join(root, 'tests/security/disposable/functions'), join(state.workspace, 'supabase/functions'), { recursive: true });
     });
-    await stage('migration-replay-and-seed', async () => { await cliRun(['start']); });
+    await stage('empty-stack-start', async () => { await cliRun(['start', '--debug']); });
     let statusPath;
     let status;
     await stage('local-target', async () => {
@@ -165,6 +166,19 @@ try {
       statusPath = join(state.workspace, 'local-status.json');
       writeFileSync(statusPath, JSON.stringify(status), { mode: 0o600 });
       state.resources.push('synthetic-credentials'); persist();
+    });
+    await stage('migration-replay-and-seed', async () => {
+      // Explicit local target; never link a project or supply a remote DB URL.
+      assertLoopback(status.API_URL); assertLoopback(status.DB_URL, ['postgresql:', 'postgres:']);
+      cpSync(join(root, 'supabase/migrations'), join(state.workspace, 'supabase/migrations'), { recursive: true });
+      cpSync(join(root, 'supabase/seed.sql'), join(state.workspace, 'supabase/seed.sql'));
+      await cliRun(['db', 'reset', '--local', '--debug']);
+    });
+    await stage('post-replay-local-target', async () => {
+      status = JSON.parse(await cliRun(['status', '-o', 'json']));
+      assertLoopback(status.API_URL); assertLoopback(status.DB_URL, ['postgresql:', 'postgres:']);
+      if (!status.ANON_KEY || !status.SERVICE_ROLE_KEY) throw new Error('MISSING_LOCAL_KEYS');
+      writeFileSync(statusPath, JSON.stringify(status), { mode: 0o600 });
     });
     async function verify(kind) {
       const outputPath = join(reportDir, `${id}-${kind}.json`);
@@ -194,7 +208,7 @@ try {
   if (interrupted || report.cleanup.result !== 'PASS') { report.decision = 'NO-GO'; process.exitCode = 1; }
   report.finishedAt = new Date().toISOString();
   report.durationMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
-  for (const name of ['docker', 'network-isolation', 'prepare', 'migration-replay-and-seed', 'local-target', 'baseline-integration', 'local-candidate', 'candidate-integration']) {
+  for (const name of ['docker', 'network-isolation', 'prepare', 'empty-stack-start', 'local-target', 'migration-replay-and-seed', 'post-replay-local-target', 'baseline-integration', 'local-candidate', 'candidate-integration']) {
     if (!report.stages.some(row => row.stage === name)) report.stages.push({ stage: name, result: 'NOT_EXECUTED' });
   }
   report.tests = {

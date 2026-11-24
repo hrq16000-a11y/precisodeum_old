@@ -1,6 +1,8 @@
 // Closed vocabulary: never emit raw stdout/stderr, URLs, keys, or SQL.
 export function commandDiagnostic(output, { code, signal, timedOut, missing } = {}) {
   const rules = [
+    ['DOCKER_VOLUME_OR_CONTAINER', /(?:failed to (?:create|remove) (?:a )?(?:volume|container)|volume.*already exists|container name.*already in use)/i],
+    ['STARTUP_PRECONDITION', /(?:database is not healthy|service is not healthy|failed to initialize|not initialized|failed to connect to docker|cannot connect to the Docker daemon)/i],
     ['IMAGE_PULL_FAILED', /(?:failed to pull|error pulling|pull access denied|manifest unknown|no matching manifest|toomanyrequests|failed to resolve reference)/i],
     ['PORT_CONFLICT', /(?:port is already allocated|address already in use|bind:.*already in use)/i],
     ['DISK_EXHAUSTED', /no space left on device/i],
