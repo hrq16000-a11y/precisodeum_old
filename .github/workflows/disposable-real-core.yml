@@ -23,6 +23,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Boot isolated core, replay schema and verify real services
+        env:
+          DISPOSABLE_REPLAY_DIAGNOSTIC: '1'
         run: bash scripts/security/disposable-real-core.sh
       - name: Upload sanitized evidence
         if: always()

@@ -105,6 +105,48 @@ for service in db auth rest storage imgproxy; do
   test -n "$cid"
   docker inspect "$cid" | python3 -c 'import sys,json; d=json.load(sys.stdin)[0]; assert not d["HostConfig"]["PortBindings"]; assert set(d["NetworkSettings"]["Networks"]) == {sys.argv[1]}; assert d["State"]["Running"]' "$network"
 done
+# Diagnostic-only pass: inspect the entire original history once, without
+# inventing objects, granting permissions, or treating cascading errors as fixes.
+if [[ "${DISPOSABLE_REPLAY_DIAGNOSTIC:-0}" == 1 ]]; then
+  stage=history-diagnostic
+  python3 - "$root/supabase/migrations" "$evidence" "$work" "$project" <<'PY'
+import pathlib, sys, subprocess, re, json, collections, hashlib
+src,evidence,work=map(pathlib.Path,sys.argv[1:4]); project=sys.argv[4]
+files=sorted(src.glob('*.sql'))
+assert len(files)==528
+cmd=['docker','compose','--project-name',project,'--file',str(work/'core.json'),'exec','-T','db','psql','-X','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose','--single-transaction']
+rows=[]
+first_failure=None
+for f in files:
+    assert re.fullmatch(r'[0-9]{14}_[A-Za-z0-9_-]+\.sql',f.name)
+    data=f.read_bytes()
+    # All data is generated locally. Never emit raw SQL or stderr.
+    r=subprocess.run(cmd,input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120)
+    row={'migration':f.name,'gitBlobSha':hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(),'result':'PASS' if r.returncode==0 else 'FAIL','afterPriorFailure':first_failure is not None}
+    if r.returncode:
+        err=r.stderr.decode('utf-8','replace')
+        m=re.search(r'ERROR:\s*([0-9A-Z]{5}):',err)
+        row['sqlState']=m.group(1) if m else 'UNCLASSIFIED'
+        # Only a simple object identifier already present in this source file,
+        # never a value, query, error detail or arbitrary message.
+        m=re.search(r'ERROR:\s*[0-9A-Z]{5}:\s*(?:column|relation|type|schema) "([A-Za-z_][A-Za-z_0-9.]*)" (?:of relation "[A-Za-z_][A-Za-z_0-9.]*" )?does not exist',err)
+        if m and re.search(r'(?<![A-Za-z_0-9])'+re.escape(m.group(1))+r'(?![A-Za-z_0-9])',data.decode('utf-8','replace'),re.I):
+            row['missingIdentifier']=m.group(1)
+        # Infrastructure or session loss cannot be interpreted as SQL history errors.
+        if row['sqlState']=='UNCLASSIFIED' or row['sqlState'].startswith(('08','58')):
+            rows.append(row)
+            break
+        if first_failure is None: first_failure=f.name
+    rows.append(row)
+    if len(rows)%50==0: print(f'Diagnostic: {len(rows)}/{len(files)} files attempted',flush=True)
+failed=[r for r in rows if r['result']=='FAIL']
+report={'scope':'DIAGNOSTIC_ONLY','replayMode':'ORIGINAL_CHRONOLOGICAL_CONTINUE_ON_SQL_ERROR','expected':len(files),'attempted':len(rows),'passed':len(rows)-len(failed),'failed':len(failed),'firstFailure':first_failure,'sqlStateCounts':dict(collections.Counter(r['sqlState'] for r in failed)),'completeInventory':len(rows)==len(files),'integrationCertified':False,'productionApproval':False,'rows':rows}
+(evidence/'history-diagnostic.json').write_text(json.dumps(report,indent=2))
+print(json.dumps({k:v for k,v in report.items() if k!='rows'}))
+# Never approve integration based on a best-effort history pass.
+PY
+  exit 1
+fi
 stage=real-migrations
 # QA-only dependency-order reconciliation. Exact historical blobs are verified;
 # no repository migration is edited, skipped wholesale or certified as chronological.
