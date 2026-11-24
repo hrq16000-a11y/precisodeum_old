@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { requireSubmittedRequest } from '@/lib/relatedFlowIntegrity';
 import {
   changeRequestSchema,
   diffChanges,
@@ -54,11 +55,12 @@ const SponsorChangeRequestForm = ({ sponsorId, snapshot, hasPending, onSubmitted
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.rpc('sponsor_submit_change_request' as any, {
+      const { data, error } = await supabase.rpc('sponsor_submit_change_request' as any, {
         _sponsor_id: sponsorId,
         _changes: diff,
       });
       if (error) throw error;
+      requireSubmittedRequest(data);
       toast.success('Solicitação enviada. Aguarde a revisão do administrador.');
       reset(values);
       onSubmitted();
@@ -70,13 +72,15 @@ const SponsorChangeRequestForm = ({ sponsorId, snapshot, hasPending, onSubmitted
   });
 
   const requestRenewal = async () => {
+    if (submitting || hasPending) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.rpc('sponsor_submit_change_request' as any, {
+      const { data, error } = await supabase.rpc('sponsor_submit_change_request' as any, {
         _sponsor_id: sponsorId,
         _changes: { renewal_requested: true },
       });
       if (error) throw error;
+      requireSubmittedRequest(data);
       toast.success('Pedido de renovação enviado ao administrador.');
       onSubmitted();
     } catch (e: any) {

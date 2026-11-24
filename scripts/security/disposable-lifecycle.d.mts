@@ -1,0 +1,10 @@
+export const CHECKS: string[];
+export function executionId(value: string): string;
+export function ownedWorkspace(id: string): string;
+export function ownedResource(name: string, projectId: string): boolean;
+export function failedMigration(output: string): string | null;
+export type Evidence = { complete: boolean; checks: { check: string; result: string }[] };
+export function testOutcome(evidence?: Evidence): { result: string; complete: boolean; checks: { check: string; result: string }[] };
+export type CleanupState = { executionId: string; workspace: string; projectId: string; network: string; resources?: string[] };
+export function cleanupOwned(state: CleanupState, adapter: { inventory(state: CleanupState): Promise<string[]>; remove(resource: string, state: CleanupState): Promise<void>; stopProcesses(): Promise<void> }): Promise<{ result: string; created: string[]; removed: string[]; residual: string[]; reasons: string[]; inventoriesComplete: boolean }>;
+export function stepSummary(report: { decision: string; commitSha: string | null; durationMs: number; baseline: { result: string }; candidateSql: string; candidate: { result: string }; cleanup: { result: string }; stages: { stage: string; result: string }[] }): string;

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuthIdentity } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { flowErrorMessage, resolvedSuggestionStatus } from '@/lib/relatedFlowIntegrity';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface IdentitySuggestion {
   id: string;
@@ -38,10 +40,12 @@ const IdentitySuggestionsWidget = ({ className = '', limit, hideViewAllLink = fa
   const [items, setItems] = useState<IdentitySuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) { setItems([]); setLoading(false); return; }
     setLoading(true);
+    setLoadError(null);
     try {
       const { data, error } = await supabase
         .from('profile_change_suggestions' as any)
@@ -49,7 +53,10 @@ const IdentitySuggestionsWidget = ({ className = '', limit, hideViewAllLink = fa
         .eq('user_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      if (!error) setItems((data as unknown as IdentitySuggestion[]) || []);
+      if (error) throw error;
+      setItems((data as unknown as IdentitySuggestion[]) || []);
+    } catch (error) {
+      setLoadError(flowErrorMessage(error, 'Não foi possível carregar as sugestões.'));
     } finally {
       setLoading(false);
     }
@@ -67,7 +74,7 @@ const IdentitySuggestionsWidget = ({ className = '', limit, hideViewAllLink = fa
         _action: action,
       });
       if (error) throw error;
-      const status = (data as any)?.status;
+      const status = resolvedSuggestionStatus(data);
       if (status === 'applied') toast.success('Sugestão aplicada ao seu perfil.');
       else if (status === 'dismissed') toast.info('Sugestão recusada.');
       else if (status === 'already_resolved') toast.info('Esta sugestão já foi tratada.');
@@ -79,7 +86,14 @@ const IdentitySuggestionsWidget = ({ className = '', limit, hideViewAllLink = fa
     }
   };
 
-  if (loading || items.length === 0) return null;
+  if (loading) return <Skeleton className="h-24 w-full" />;
+  if (loadError) return (
+    <div role="alert" className="space-y-2 rounded-lg border border-destructive p-4">
+      <p className="text-sm text-destructive">{loadError}</p>
+      <Button variant="outline" size="sm" onClick={() => void load()}>Tentar novamente</Button>
+    </div>
+  );
+  if (items.length === 0) return null;
 
   const visible = limit ? items.slice(0, limit) : items;
   const hasMore = limit ? items.length > limit : false;
@@ -126,7 +140,7 @@ const IdentitySuggestionsWidget = ({ className = '', limit, hideViewAllLink = fa
                     size="sm"
                     className="h-8 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={() => handleAction(s.id, 'apply')}
-                    disabled={busy}
+                    disabled={actingId !== null}
                   >
                     {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
                     Confirmar
@@ -136,7 +150,7 @@ const IdentitySuggestionsWidget = ({ className = '', limit, hideViewAllLink = fa
                     variant="outline"
                     className="h-8 gap-1"
                     onClick={() => handleAction(s.id, 'dismiss')}
-                    disabled={busy}
+                    disabled={actingId !== null}
                   >
                     <X className="h-3 w-3" />
                     Ignorar

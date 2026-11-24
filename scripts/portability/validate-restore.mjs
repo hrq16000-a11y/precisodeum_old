@@ -31,15 +31,18 @@ for (const file of manifest.files || []) {
   results.push({ ...file, ok: actual === file.sha256, actual_sha256: actual, actual_bytes: buffer.length });
 }
 
-const { data: mediaRows, error: mediaError } = await db
+const { data: mediaRows, error: mediaError, count: mediaCount } = await db
   .from('media')
-  .select('id,user_ref,storage_path,public_url,is_active')
+  .select('id,user_ref,storage_path,public_url,is_active', { count: 'exact' })
   .eq('is_active', true)
   .limit(10000);
 
 const orphanMedia = (mediaRows || []).filter((row) => !row.user_ref).length;
+const mediaComplete = Array.isArray(mediaRows) && mediaCount === mediaRows.length;
+const manifestComplete = Array.isArray(manifest.files) && manifest.files.length > 0;
 const report = {
-  ok: results.every((row) => row.ok) && !mediaError && orphanMedia === 0,
+  ok: manifestComplete && results.every((row) => row.ok) && !mediaError && mediaComplete && orphanMedia === 0,
+  media_read_complete: mediaComplete,
   files_expected: results.length,
   files_ok: results.filter((row) => row.ok).length,
   files_failed: results.filter((row) => !row.ok).length,
