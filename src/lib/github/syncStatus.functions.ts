@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import { GITHUB_REPO, isFullSha, type WorkflowRunSummary } from './syncStatus';
+import { GITHUB_REPO, HOMOLOGATION_WORKFLOW_PATH, isFullSha, type WorkflowRunSummary } from './syncStatus';
 
 const GATEWAY = 'https://connector-gateway.lovable.dev/github';
 
@@ -51,10 +51,20 @@ export const getGithubSyncStatus = createServerFn({ method: 'POST' })
     };
 
     try {
-      const [commits, runsPayload] = await Promise.all([
+      const workflowFile = HOMOLOGATION_WORKFLOW_PATH.split('/').pop();
+      const [commits, runsPayload, homologPayload] = await Promise.all([
         get<GhCommit[]>(`repos/${GITHUB_REPO}/commits?sha=main&per_page=100`),
         get<{ workflow_runs?: GhRun[] }>(`repos/${GITHUB_REPO}/actions/runs?per_page=30`),
+        // Consulta dedicada: a homologação nunca some da janela por excesso de outras automações.
+        get<{ workflow_runs?: GhRun[] }>(`repos/${GITHUB_REPO}/actions/workflows/${workflowFile}/runs?per_page=10`),
       ]);
+      const seen = new Set<string>();
+      const allRuns = [...(homologPayload.workflow_runs ?? []), ...(runsPayload.workflow_runs ?? [])].filter((r) => {
+        const k = r.html_url ?? '';
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
       const head = commits[0];
       return {
         ...base,
@@ -67,7 +77,7 @@ export const getGithubSyncStatus = createServerFn({ method: 'POST' })
             }
           : null,
         remoteShas: commits.map((c) => c.sha).filter(isFullSha),
-        runs: (runsPayload.workflow_runs ?? []).map((r) => ({
+        runs: allRuns.map((r) => ({
           name: r.name ?? '',
           path: r.path ?? '',
           branch: r.head_branch ?? '',
@@ -76,7 +86,7 @@ export const getGithubSyncStatus = createServerFn({ method: 'POST' })
           conclusion: r.conclusion ?? null,
           createdAt: r.created_at ?? '',
           url: r.html_url ?? '',
-        })),
+        })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
       };
     } catch (e) {
       return { ...base, connected: true, error: e instanceof Error ? e.message : 'github_unreachable' };

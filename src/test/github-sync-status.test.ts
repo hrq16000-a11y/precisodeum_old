@@ -30,7 +30,10 @@ describe('homologationState', () => {
   it('execução em andamento não conta como aprovada', () => {
     expect(homologationState([run({ status: 'in_progress', conclusion: null })])).toBe('running');
   });
-  it('só a última execução concluída com sucesso aprova', () => {
-    expect(homologationState([run({ conclusion: 'success' })])).toBe('passed');
+  it('só a última execução concluída com sucesso na versão candidata aprova', () => {
+    expect(homologationState([run({ conclusion: 'success' })], sha('a'))).toBe('passed');
+  });
+  it('sucesso em outra versão (ex.: ramo de teste) não aprova a versão candidata', () => {
+    expect(homologationState([run({ conclusion: 'success', sha: sha('b') })], sha('a'))).toBe('outdated');
   });
 });

@@ -31,6 +31,7 @@ const HOMOLOGATION_LABEL = {
   failed: { text: 'Reprovada', icon: XCircle, variant: 'destructive' as const },
   running: { text: 'Em andamento', icon: Clock, variant: 'secondary' as const },
   not_run: { text: 'Não executada', icon: AlertTriangle, variant: 'outline' as const },
+  outdated: { text: 'De outra versão', icon: AlertTriangle, variant: 'outline' as const },
 };
 
 function CommitList({ items, empty }: { items: LocalCommit[]; empty: string }) {
@@ -61,10 +62,11 @@ export default function AdminGithubSyncPage() {
     () => classifyLocalCommits(LOCAL_COMMITS, data?.remoteShas ?? []),
     [data?.remoteShas],
   );
-  const homolog = homologationState(data?.runs ?? []);
+  const homolog = homologationState(data?.runs ?? [], data?.mainHead?.sha ?? null);
+  const remoteReadable = !!data?.connected && !data.error;
   const H = HOMOLOGATION_LABEL[homolog];
   const localHead = LOCAL_COMMITS[0];
-  const inSync = !!localHead && !!data?.mainHead && pending.length === 0;
+  const inSync = remoteReadable && !!localHead && !!data?.mainHead && pending.length === 0;
 
   return (
     <AdminLayout>
@@ -105,7 +107,9 @@ export default function AdminGithubSyncPage() {
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Situação do envio</CardTitle></CardHeader>
                 <CardContent className="space-y-1">
-                  {LOCAL_COMMITS.length === 0 ? (
+                  {!remoteReadable ? (
+                    <p className="text-sm text-muted-foreground">Não confirmado: o GitHub não respondeu.</p>
+                  ) : LOCAL_COMMITS.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Lista local indisponível nesta versão.</p>
                   ) : inSync ? (
                     <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-primary" strokeWidth={1.75} /> Tudo enviado</p>
@@ -128,12 +132,17 @@ export default function AdminGithubSyncPage() {
                 <CardContent className="space-y-1">
                   <Badge variant={H.variant} className="gap-1"><H.icon className="h-3.5 w-3.5" strokeWidth={1.75} />{H.text}</Badge>
                   <p className="text-xs text-muted-foreground">
-                    {homolog === 'passed' ? 'Release pode seguir para publicação, com autorização.' : 'Publicação bloqueada até a última execução passar.'}
+                    {homolog === 'passed'
+                      ? 'Última execução passou nesta versão do main; publicação ainda depende de autorização.'
+                      : homolog === 'outdated'
+                        ? 'A última execução aprovada é de outra versão; rode de novo nesta versão do main.'
+                        : 'Publicação bloqueada até a última execução passar nesta versão do main.'}
                   </p>
                 </CardContent>
               </Card>
             </div>
 
+            {remoteReadable && (<>
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">Falta enviar ({pending.length})</CardTitle></CardHeader>
               <CardContent><CommitList items={pending} empty="Nenhuma alteração pendente." /></CardContent>
@@ -143,6 +152,7 @@ export default function AdminGithubSyncPage() {
               <CardHeader className="pb-2"><CardTitle className="text-base">Já enviado ({sent.length})</CardTitle></CardHeader>
               <CardContent><CommitList items={sent} empty="Nenhuma alteração recente confirmada no GitHub." /></CardContent>
             </Card>
+            </>)}
 
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">Automações recentes no GitHub</CardTitle></CardHeader>

@@ -35,18 +35,21 @@ export function classifyLocalCommits(local: LocalCommit[], remoteShas: Iterable<
   return { sent, pending };
 }
 
-export type HomologationState = 'passed' | 'failed' | 'running' | 'not_run';
+export type HomologationState = 'passed' | 'failed' | 'running' | 'not_run' | 'outdated';
 
 /**
  * A homologação só conta como aprovada quando a execução MAIS RECENTE do
  * workflow descartável terminou com sucesso. Falha, cancelamento ou ausência
  * de execução nunca liberam a publicação.
  */
-export function homologationState(runs: WorkflowRunSummary[]): HomologationState {
+export function homologationState(runs: WorkflowRunSummary[], candidateSha?: string | null): HomologationState {
   const latest = runs
     .filter((r) => r.path === HOMOLOGATION_WORKFLOW_PATH)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
   if (!latest) return 'not_run';
   if (latest.status !== 'completed') return 'running';
-  return latest.conclusion === 'success' ? 'passed' : 'failed';
+  if (latest.conclusion !== 'success') return 'failed';
+  // Aprovação de outra versão não vale para a versão candidata atual.
+  if (!candidateSha || latest.sha !== candidateSha) return 'outdated';
+  return 'passed';
 }
