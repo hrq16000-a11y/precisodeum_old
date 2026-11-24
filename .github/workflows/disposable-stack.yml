@@ -1,6 +1,8 @@
 name: Disposable backend integration
 
 on:
+  push:
+    branches: [qa-disposable-pr3-20261124]
   pull_request:
     paths:
       - 'supabase/migrations/**'
@@ -28,6 +30,9 @@ jobs:
       DISPOSABLE_EXECUTION_ID: preciso-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && '89a7af1557ec64664e56e881687a1bf8e6b4c1c0' || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
