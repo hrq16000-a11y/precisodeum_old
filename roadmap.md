@@ -3,7 +3,7 @@
 ## Roteiro 360° consolidado — Rodada 2A.1
 
 - [x] 2A.1: complementar orquestrador existente com evidências por execução, estados NÃO EXECUTADO, limpeza por escopo e etapa final always; testar falhas parciais sem simular integração aprovada.
-- [ ] 2A.2: executar o workflow existente em Linux/GitHub com Docker; depende de 2A.1 e confirmação/sincronização do repositório associado. API GitHub acessível, mas SHA anterior retornou 404 nos três repositórios encontrados e workflow retornou 404 no legado; destino aguardando resposta, nenhuma execução remota disparada.
+- [ ] 2A.2: executar o workflow existente em Linux/GitHub com Docker em `hrq16000-a11y/precisodeum_old` (destino confirmado pelo usuário em 2026-11-24). Bloqueio: sincronização do candidato `ac783cc7fbb4476869327201c2600f1567fa70ee`; API retornou 422 (No commit found), arquivo e workflow retornaram 404 em `main` (SHA remoto `01d64b3e2b03df0d88a15aa341413e2ff78fc895`). Nenhuma execução remota disparada; conferir Git sync na interface do projeto antes de executar o workflow.
 - [ ] 2B: segurança funcional/auditoria de aprovação, sugestões e relatório; depende de baseline descartável completo. Depois: patrocinadores, campos administrativos, fotos, links privados, CSV, concorrência/atomicidade/persistência; não iniciar em paralelo agora.
 - [ ] 2C: cadastro E2E mobile automatizado; depende de segurança funcional.
 - [ ] 2D: publicar release de segurança com gates aprovados, autorização específica para banco real e correspondência commit/deployment; não depende de 5A/5B/5C, WhatsApp ou SEO.

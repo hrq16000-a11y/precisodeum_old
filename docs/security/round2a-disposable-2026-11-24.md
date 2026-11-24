@@ -34,7 +34,7 @@ Não iniciou 2B, scan, alterações em produção, migrações históricas ou te
 | Execução real do orquestrador sem Docker | Interrompe com código 1/NO-GO; Docker ausente; 14 checks de baseline/candidato NÃO EXECUTADOS |
 | Arquivos temporários locais | Diretório da execução removido, conferido no filesystem |
 | Limpeza Docker completa | NÃO COMPROVADA: inventários inicial/final indisponíveis; relatório FAIL, inclusive na etapa final |
-| Workflow real GitHub | PENDENTE: destino/SHA/workflow não confirmados, nenhum run disparado |
+| Workflow real GitHub | PENDENTE: destino confirmado; candidato e workflow ausentes nas consultas, nenhum run disparado |
 
 Artefatos locais ignorados pelo Git: `test-results/disposable-stack/local-2a1-verification-state.json`
 e `local-2a1-verification-summary.json`. Execução completa produzirá também
@@ -51,15 +51,32 @@ O commit anterior `231369e31c2392d217f33cab3b2685193b73471e` retornou HTTP 404
 nos três; o workflow retornou HTTP 404 no legado. Esses 404 não comprovam,
 isoladamente, ausência de permissão ou inexistência absoluta do recurso.
 O remote local é armazenamento interno, não prova vínculo com um desses
-repositórios. Não escolher destino por semelhança de nome; pergunta enviada.
+repositórios. O usuário confirmou `hrq16000-a11y/precisodeum_old` em 2026-11-24.
+
+Verificação pela conexão **Henrique's GitHub API**, após essa confirmação:
+
+- `main`: HTTP 200, SHA `01d64b3e2b03df0d88a15aa341413e2ff78fc895`.
+- Candidato local `ac783cc7fbb4476869327201c2600f1567fa70ee`: HTTP 422,
+  mensagem `No commit found for SHA`.
+- Workflow pela API Actions e arquivo `.github/workflows/disposable-stack.yml`
+  em `main`: HTTP 404 em ambas as consultas.
+- Nenhum dispatch enviado: não executar outro SHA como se fosse o candidato.
+  Esses resultados não certificam a configuração/status do Git sync, que
+  somente a interface do projeto permite conferir. Não houve escrita remota,
+  alteração de branch, publicação ou execução de testes de integração.
+
+**Bloqueio atual:** candidato ainda não confirmado no destino. Conferir
+**Project settings → Git** no Lovable e sincronizar o candidato pelo fluxo
+existente; não sobrescrever `main` pela API como alternativa ao Git sync.
 
 Após confirmar o repositório e sincronizar o novo candidato em `main`:
 
 ```bash
-# No GitHub/Codex autenticado; substituir OWNER/REPO pelo destino confirmado.
-gh api repos/OWNER/REPO/git/ref/heads/main --jq .object.sha
-gh workflow run disposable-stack.yml --repo OWNER/REPO --ref main
-gh run list --repo OWNER/REPO --workflow disposable-stack.yml --limit 1
+# No GitHub/Codex autenticado, após confirmar o candidato sincronizado.
+gh api repos/hrq16000-a11y/precisodeum_old/commits/ac783cc7fbb4476869327201c2600f1567fa70ee --jq .sha
+gh api repos/hrq16000-a11y/precisodeum_old/git/ref/heads/main --jq .object.sha
+gh workflow run disposable-stack.yml --repo hrq16000-a11y/precisodeum_old --ref main
+gh run list --repo hrq16000-a11y/precisodeum_old --workflow disposable-stack.yml --limit 5
 # Observar o run correspondente ao SHA, ler Step Summary e baixar seus artefatos.
 ```
 
