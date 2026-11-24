@@ -74,8 +74,8 @@ export function DashboardHealthCheck({
     if (runningRef.current) return;
     runningRef.current = true;
     setLoading(true);
-    setErr(null);
-    setResult(null);
+    // Mantém o último resultado visível durante re-checagens periódicas
+    // para não exibir o aviso de carregamento a cada 5 minutos.
     try {
       const { data, error } = await supabase.rpc("validate_db_health" as never);
       if (error) throw error;
@@ -86,6 +86,7 @@ export function DashboardHealthCheck({
       const wasFailing = previousOkRef.current === false;
       const recovered = wasFailing && r.ok === true;
       await persistResult(r, recovered);
+      setErr(null);
       setResult(r);
       previousOkRef.current = r.ok;
       onHealthChange?.(r.ok);
@@ -108,6 +109,7 @@ export function DashboardHealthCheck({
         ? parts.join(' · ')
         : (typeof e === 'string' ? e : JSON.stringify(e));
       console.error('[DashboardHealthCheck] validate_db_health failed:', e);
+      setResult(null);
       setErr(msg);
       onHealthChange?.(false);
     } finally {

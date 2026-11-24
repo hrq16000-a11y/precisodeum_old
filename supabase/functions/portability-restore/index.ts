@@ -210,7 +210,11 @@ Deno.serve(async (req) => {
     // -------- storage-checksums --------
     if (action === "storage-checksums") {
       const wantHash = url.searchParams.get("hash") !== "false";
-      const limitPerBucket = Number(url.searchParams.get("limit") ?? "200");
+      // Sem "limit" explícito, verifica o inventário completo: amostragem parcial
+      // nunca pode certificar a restauração, então não deve ser o padrão.
+      const limitParam = url.searchParams.get("limit");
+      const parsedLimit = limitParam === null ? NaN : Number(limitParam);
+      const limitPerBucket = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : Infinity;
       const out: any[] = [];
       for (const b of STORAGE_BUCKETS) {
         const files = await listAllFiles(admin, b);
