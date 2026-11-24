@@ -44,6 +44,30 @@ The existing restoration endpoint's source is corrected but has not been deploye
 
 Next gate: authorize applying the local candidate and deploying source corrections, then exercise populated flows against a complete disposable application backend before claiming full homologation.
 
+## Follow-up flow sweep — code read on 2026-11-24
+
+Rules: declining a suggestion must audit author/target/action/date/field without copying identity values or free-form source text; health history read/write failures must not certify absence of failures or confirmed recovery. Only these two authorized local flows may be changed.
+
+| Place read in this sweep | Conclusion |
+| --- | --- |
+| `IdentitySuggestionsWidget`, full suggestion page and provider section registry | The page and dashboard summary share one action caller. Errors and unresolved responses do not remove suggestions as success. Source and suggested value are displayed to the owner, not written by the UI to audit. |
+| Local `resolve_identity_suggestion`, apply and dismiss | Both audit inserts keep author/target/action/time plus field and suggestion ID; neither copies source or old/new identity values. Settled suggestions return without mutation. Disposable tests passed in the preceding verification. |
+| `DashboardLayout` and `DashboardHealthCheck`, mount/interval/retry | Every layout consumer uses the same corrected widget. Recovery waits for history persistence; read/write failures surface and do not confirm success. The background interval is client-side, not a newly introduced server job. |
+| `AdminPortabilityDetailsPage`, load/reload/history | Current read must complete before health cards and empty-history claims appear. Old evidence is discarded before reload. Intercepted desktop/mobile checks and local regressions passed in the preceding verification. |
+| Historical `validate_db_health` migration | Checks function/column existence only. It cannot certify business actions or recovery persistence; unchanged. Current deployed definition was not fetched in this sweep. |
+| Historical `health_check_history_autoclean` and AFTER INSERT trigger | Deletes old history probabilistically; does not announce recovery or write suggestions. Historical source read only; retention/settings and existing records unchanged. No matching cron registration found by repository search; actual deployed schedules were not queried in this sweep. |
+| Historic identity migrations | Not edited; local candidate is still unapplied. Historical source is not proof of current deployed remediation. |
+| `AdminLayout` → `runPostDeployAudit` | Independent diagnostic: ignores returned errors and converts missing reads to empty arrays, potentially emitting system-integrity success. Outside authorized history flow; left unchanged pending authorization. |
+| `AdminSystemHealthPage` | Independent system/performance diagnostic has healthy defaults without data and performance query fallback to an empty array. Needs separate review/correction; outside scope. |
+| `AdminAuthHealthPage` | Read error banner exists, but distribution still uses empty data to show health OK. Outside scope; unchanged. |
+| `AuthHealthPanel`, including its periodic queries | Throws query errors but does not render their state; default arrays can show no error-page access. Outside scope; unchanged. |
+| `AdminTrackingHealthPage` | Summary table reports errors; summary KPI defaults and recent-error list can still show zero/no errors on failed reads. Outside scope; unchanged. |
+| `AdminUploadStressTestPage` | Main result read ignores returned error, defaults to an empty array, and can show no failures. Outside scope; unchanged. |
+| `AdminErrorReportsPage` | List read has a toast but leaves empty/stale rows; KPI reads default missing counts to zero. Outside scope; unchanged. |
+| `AdminGscSubmissionsPage`, history read and persistent alert evaluation | Failed history read emits a toast then clears rows; persistent-alert evaluation can report no threshold reached. Outside scope; settings, alert sends and functions untouched. |
+
+These independent diagnostics were inspected in source, not exercised end-to-end or certified. Their database functions and external integrations have not been revalidated. No further app code changes were made during this sweep. Deployment, complete disposable-backend integration, concurrency, external notification delivery, restoration, exact historical finding pairs and public commit correspondence remain unverified; NO-GO remains.
+
 ## Wider sweep inventory
 
 Rule: a supported change must persist and be audited before it is reported as applied; unavailable or incomplete evidence must not be reported as success. Settled records remain untouched.
