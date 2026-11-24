@@ -18,4 +18,5 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Keep unapplied local database corrections in docs/security/local-fixes until deployment is authorized; do not modify applied migration history.
 - Sponsor review/cancellation and identity resolution lock pending rows and commit audit records atomically; incomplete audit reads must never enable detailed exports or certify restoration.
 - Restoration success requires explicit complete evidence from the current run; skipped checks, partial inventories, and dry runs never certify completion.
-- Identity-application audit metadata records field and suggestion identifiers, not old/new values or source text, so audit provenance does not duplicate sensitive identity data.
+- Identity apply/dismiss audit metadata records field and suggestion identifiers, not old/new values or source text, so audit provenance does not duplicate sensitive identity data.
+- Health success requires a complete current read and confirmed history persistence; recovery notifications follow the history write so unavailable evidence cannot certify recovery.

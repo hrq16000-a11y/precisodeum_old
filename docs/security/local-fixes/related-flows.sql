@@ -89,7 +89,7 @@ BEGIN
     UPDATE public.profile_change_suggestions SET status = 'dismissed', resolved_at = now() WHERE id = _suggestion_id;
     INSERT INTO public.audit_log(user_id, action, resource_type, resource_id, details)
     VALUES(v_uid, 'identity_suggestion_dismissed', 'profile', v_uid,
-      jsonb_build_object('suggestion_id', v_row.id, 'field', v_row.field, 'source', v_row.source));
+      jsonb_build_object('suggestion_id', v_row.id, 'field', v_row.field));
     RETURN jsonb_build_object('status','dismissed');
   END IF;
 

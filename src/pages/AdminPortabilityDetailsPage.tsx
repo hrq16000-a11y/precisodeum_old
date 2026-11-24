@@ -44,6 +44,8 @@ export default function AdminPortabilityDetailsPage() {
   const reload = useCallback(async () => {
     setLoading(true);
     setReadError(null);
+    setHealth(null);
+    setHistory([]);
     try {
       const [{ data: h, error: e1 }, { data: hist, error: e2 }] = await Promise.all([
         supabase.rpc("validate_db_health" as never),
@@ -54,9 +56,14 @@ export default function AdminPortabilityDetailsPage() {
           .limit(50),
       ]);
       if (e1) throw e1;
-      setHealth(h as unknown as HealthResult);
       if (e2) throw e2;
-      setHistory((hist as unknown as HistoryRow[]) ?? []);
+      const currentHealth = h as unknown as HealthResult;
+      if (!currentHealth || typeof currentHealth.ok !== 'boolean' || !Array.isArray(currentHealth.rpcs)
+        || !Array.isArray(currentHealth.columns) || !Array.isArray(hist)) {
+        throw new Error('Verificação ou histórico incompleto.');
+      }
+      setHealth(currentHealth);
+      setHistory(hist as unknown as HistoryRow[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setReadError('Não foi possível carregar a verificação completa e seu histórico. Tente novamente.');
@@ -97,6 +104,8 @@ export default function AdminPortabilityDetailsPage() {
         </header>
 
         {readError && <p role="alert" className="text-sm text-destructive">{readError}</p>}
+        {loading && <p role="status" className="text-sm text-muted-foreground">Carregando verificação e histórico...</p>}
+        {!loading && !readError && health && <>
         {/* Status geral */}
         <Card>
           <CardHeader>
@@ -238,6 +247,7 @@ export default function AdminPortabilityDetailsPage() {
             </div>
           </CardContent>
         </Card>
+        </>}
       </div>
     </AdminLayout>
   );

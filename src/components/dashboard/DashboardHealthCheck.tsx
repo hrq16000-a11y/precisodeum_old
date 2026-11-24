@@ -39,16 +39,16 @@ export function DashboardHealthCheck({
   // Track previous OK state so we can detect recovery transitions
   // (failure → success) and persist a "recovered" event in history.
   const previousOkRef = useRef<boolean | null>(null);
+  const runningRef = useRef(false);
 
   const persistResult = async (r: HealthResult, recovered: boolean) => {
-    try {
       const now = Date.now();
-      const last = lastLoggedRef.current ||
-        Number(sessionStorage.getItem(STORAGE_LAST_LOG) ?? 0);
+      const last = lastLoggedRef.current;
       // Always log when status changes (failure or recovery), otherwise throttle
-      const shouldLog = r.ok === false || recovered || (now - last) > LOG_THROTTLE_MS;
+      const shouldLog = previousOkRef.current === null || r.ok === false || recovered || (now - last) > LOG_THROTTLE_MS;
       if (!shouldLog) return;
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error('Não foi possível identificar o autor do registro de saúde.');
       const failedRpcs = r.rpcs.filter((x) => !x.ok).map((x) => x.name);
       const failedColumns = r.columns.filter((x) => !x.ok)
         .map((x) => ({ table: x.table, column: x.column }));
@@ -60,28 +60,35 @@ export function DashboardHealthCheck({
         failed_columns: failedColumns,
         raw: { ...(r as unknown as Record<string, unknown>), recovered } as Record<string, unknown>,
       } as never);
-      if (error) throw error;
+      if (error) throw new Error('Não foi possível gravar o histórico de saúde. A recuperação não está confirmada.');
       lastLoggedRef.current = now;
+    try {
       sessionStorage.setItem(STORAGE_LAST_LOG, String(now));
     } catch (e) {
-      // Silent — health logging must never break the dashboard
-      console.warn("[DashboardHealthCheck] persist failed:", e);
+      // The database write already succeeded; local cache failure is not a failed audit.
+      console.warn("[DashboardHealthCheck] local throttle cache unavailable:", e);
     }
   };
 
   const run = async () => {
+    if (runningRef.current) return;
+    runningRef.current = true;
     setLoading(true);
     setErr(null);
+    setResult(null);
     try {
       const { data, error } = await supabase.rpc("validate_db_health" as never);
       if (error) throw error;
       const r = data as unknown as HealthResult;
-      setResult(r);
+      if (!r || typeof r.ok !== 'boolean' || !Array.isArray(r.rpcs) || !Array.isArray(r.columns)) {
+        throw new Error('A verificação de saúde retornou dados incompletos.');
+      }
       const wasFailing = previousOkRef.current === false;
       const recovered = wasFailing && r.ok === true;
+      await persistResult(r, recovered);
+      setResult(r);
       previousOkRef.current = r.ok;
       onHealthChange?.(r.ok);
-      void persistResult(r, recovered);
       if (recovered) {
         toast.success("Banco recuperado", {
           description: "As funções e colunas críticas estão presentes novamente. As ações ainda precisam de verificação.",
@@ -104,6 +111,7 @@ export function DashboardHealthCheck({
       setErr(msg);
       onHealthChange?.(false);
     } finally {
+      runningRef.current = false;
       setLoading(false);
     }
   };

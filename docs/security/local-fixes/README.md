@@ -13,13 +13,13 @@ The existing restoration endpoint's source is corrected but has not been deploye
 - Sponsor review rejects empty, mixed forbidden, malformed, and renewal payloads before status changes or notifications. Missing sponsors fail instead of producing false approval. Renewal requests remain pending and must use the existing billing workflow; no payment, subscription, or expiry change is inferred.
 - Review and cancellation lock the same pending request. Identity apply/dismiss lock the suggestion; application also locks the profile. Settled requests and suggestions are not rewritten.
 - Identity changes use the actual audit columns. Application and dismissal write audit records. Failed audit insertion rolls back the change instead of silently succeeding.
-- Rodada 2B: application audit stores only the normalized field and suggestion identifier, with author, target, action and timestamp in the audit row; old/new identity values and untrusted source text are omitted. Targeted synthetic privacy checks cover four fields and two aliases.
+- Rodada 2B: application audit stores only the normalized field and suggestion identifier, with author, target, action and timestamp in the audit row; old/new identity values and untrusted source text are omitted. Authorized follow-up also removes source text from dismissal audit, preserving the original field identifier and atomicity. Targeted synthetic privacy checks cover four fields, two aliases, and dismissal without modifying identity or settled suggestions.
 - Detailed audit qualifies catalog columns and surfaces missing-sample query failures. It remains security-invoker and admin-gated.
 - The review page blocks unsupported approvals and distinguishes read failures from an empty queue. This browser check is not a substitute for the pending database correction.
 - Suggestion reads show loading/error/retry states. Unknown or unavailable action responses no longer remove the item as if successful. Concurrent local action buttons are disabled.
 - Audit reload clears previous completion status. Detailed export is disabled unless every summary table has detail. The mobile heading no longer squeezes beside action buttons.
 - Restoration requires a verified audit, even in non-strict mode. Audit requests retain the caller's identity; smoke checks include detailed audit. Coverage settings remain unchanged.
-- Dashboard health persistence checks returned errors and advances throttling only after a successful insertion. Health wording describes structural presence, not successful business actions. Health-history read errors are surfaced.
+- Dashboard health awaits history persistence before emitting success or recovery; failed persistence remains visible and retryable without advancing confirmed state or throttling. The first check requires its own confirmed history write instead of trusting a previous widget's cache. Health wording describes structural presence, not successful business actions. The history details page discards stale data and hides success/zero-failure/empty-history claims while loading or after any read failure.
 
 ## Verification
 
@@ -34,6 +34,13 @@ The existing restoration endpoint's source is corrected but has not been deploye
 - Concurrent review versus cancellation under actual production triggers/policies was not exercised. Row locking is implemented locally; sequential settled-status regressions passed.
 - External notification delivery, restoration deployment, and the corrected shared-backend detailed report remain unverified.
 - No finding was marked fixed or ignored. Local tests do not establish deployed remediation.
+
+## Authorized follow-up: dismissal privacy and health evidence (2026-11-24)
+
+- Disposable SQL runner now includes the six apply privacy cases and dismissal provenance/privacy/identity-preservation/settled-state assertions; all pass. No shared SQL was applied.
+- Six widget regressions cover write failure, missing read, missing author, awaiting recovery insertion, retry after failed recovery, and current-run evidence despite cached timestamp. Two history-page regressions cover failed initial read and clearing earlier success after failed reload.
+- Signed-in browser verification at 1440×1000 and 390×844 used intercepted synthetic health/history responses and blocked application writes. Confirmed failed history read, successful empty history, failed reload clearing prior success, and visible dashboard write failure with retry; no page exceptions or mobile document overflow. This verifies presentation and response handling, not deployed database integration.
+- No publication, settled-record repair, permission/configuration change or scanner action. Complete integration and NO-GO status remain unchanged.
 
 Next gate: authorize applying the local candidate and deploying source corrections, then exercise populated flows against a complete disposable application backend before claiming full homologation.
 
