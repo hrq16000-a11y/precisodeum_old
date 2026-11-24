@@ -219,3 +219,102 @@ BEGIN
           jsonb_build_object('sponsor_id', v_row.sponsor_id, 'storage_paths', v_row.storage_paths));
 END;
 $function$;
+
+CREATE OR REPLACE FUNCTION public.sponsor_submit_change_request(_sponsor_id uuid, _changes jsonb, _storage_paths text[] DEFAULT '{}'::text[])
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_allowed text[] := ARRAY[
+    'image_url','logo_url','link_url','external_link',
+    'phone','whatsapp','short_description','full_description',
+    'linked_city','linked_category','renewal_requested'
+  ];
+  v_key text;
+  v_snapshot jsonb;
+  v_recent_count int;
+  v_id uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'auth required' USING ERRCODE = '28000';
+  END IF;
+
+  -- Ownership check
+  IF NOT EXISTS (
+    SELECT 1 FROM public.sponsor_contacts
+    WHERE sponsor_id = _sponsor_id AND user_id = v_uid
+  ) AND NOT public.has_role(v_uid, 'admin') THEN
+    RAISE EXCEPTION 'not authorized for this sponsor' USING ERRCODE = '42501';
+  END IF;
+
+  IF _changes IS NULL OR jsonb_typeof(_changes) <> 'object' OR _changes = '{}'::jsonb THEN
+    RAISE EXCEPTION 'no changes provided' USING ERRCODE = '22023';
+  END IF;
+
+  -- Whitelist enforcement
+  FOR v_key IN SELECT jsonb_object_keys(_changes) LOOP
+    IF NOT (v_key = ANY(v_allowed)) THEN
+      RAISE EXCEPTION 'field % is not editable via self-service', v_key USING ERRCODE = '42501';
+    END IF;
+  END LOOP;
+
+  IF jsonb_typeof(_changes) <> 'object' OR _changes = '{}'::jsonb THEN
+    RAISE EXCEPTION 'no changes provided' USING ERRCODE = '22023';
+  END IF;
+
+  -- Rate limit: max 5 requests in 24h
+  SELECT count(*) INTO v_recent_count
+  FROM public.sponsor_change_requests
+  WHERE sponsor_id = _sponsor_id
+    AND created_at > now() - interval '24 hours';
+  IF v_recent_count >= 5 THEN
+    RAISE EXCEPTION 'rate limit: max 5 change requests per 24h' USING ERRCODE = '53400';
+  END IF;
+
+  -- Single pending lock (also enforced by unique index — friendlier error)
+  IF EXISTS (
+    SELECT 1 FROM public.sponsor_change_requests
+    WHERE sponsor_id = _sponsor_id AND status = 'pending'
+  ) THEN
+    RAISE EXCEPTION 'there is already a pending change request' USING ERRCODE = '23505';
+  END IF;
+
+  -- Snapshot current values for the keys being changed
+  SELECT jsonb_build_object(
+    'image_url', image_url,
+    'logo_url', logo_url,
+    'link_url', link_url,
+    'external_link', external_link,
+    'phone', phone,
+    'whatsapp', whatsapp,
+    'short_description', short_description,
+    'full_description', full_description,
+    'linked_city', linked_city,
+    'linked_category', linked_category
+  ) INTO v_snapshot
+  FROM public.sponsors WHERE id = _sponsor_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'sponsor not found' USING ERRCODE = '22023'; END IF;
+
+  INSERT INTO public.sponsor_change_requests(sponsor_id, requested_by, changes, current_snapshot, storage_paths)
+  VALUES (_sponsor_id, v_uid, _changes, COALESCE(v_snapshot, '{}'::jsonb), COALESCE(_storage_paths, '{}'::text[]))
+  RETURNING id INTO v_id;
+
+  -- Audit
+  INSERT INTO public.audit_log(action, resource_type, resource_id, user_id, details)
+  VALUES ('sponsor_change_request_submitted', 'sponsor_change_request', v_id, v_uid,
+          jsonb_build_object('sponsor_id', _sponsor_id, 'fields', (SELECT array_agg(k) FROM jsonb_object_keys(_changes) k)));
+
+  -- Notify admins
+  INSERT INTO public.notifications(user_id, type, title, message, link)
+  SELECT ur.user_id, 'sponsor_change_request', 'Nova solicitação de patrocinador',
+         'Há uma alteração aguardando revisão.', '/admin/sponsor-change-requests'
+  FROM public.user_roles ur
+  WHERE ur.role = 'admin'
+  ON CONFLICT DO NOTHING;
+
+  RETURN v_id;
+END;
+$function$;

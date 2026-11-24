@@ -4,7 +4,7 @@
 
 Approved scope: correct future behavior without changing settled records, permissions, or settings. No publishing, shared database mutations, grant/policy changes, new scans, or settled-record repairs were performed. Existing production definitions were inspected read-only.
 
-`related-flows.sql` is an **unapplied local candidate**, not an applied migration. It replaces four existing functions without changing signatures, security modes, or access grants. Apply it through the migration tool only when shared-backend deployment is authorized. Do not edit historic migrations or mark security findings resolved before deployed verification.
+`related-flows.sql` is an **unapplied local candidate**, not an applied migration. It replaces five existing functions without changing signatures, security modes, or access grants. Apply it through the migration tool only when shared-backend deployment is authorized. Do not edit historic migrations or mark security findings resolved before deployed verification.
 
 The existing restoration endpoint's source is corrected but has not been deployed. It remains a legacy endpoint; this request introduces no new endpoint.
 
@@ -23,7 +23,7 @@ The existing restoration endpoint's source is corrected but has not been deploye
 ## Verification
 
 1. `bash tests/security/run-related-flows.sh`: PASS against fresh disposable PostgreSQL with synthetic schema/data, removed on exit. Covers ten allowed sponsor fields, protected data preservation, invalid payloads, notifications, admin denial, identity fields/aliases, ownership, dismissal audit, settled-status preservation, rollback on failed audit insertion, and detailed counts/index/sample/admin restriction.
-2. `bunx vitest run src/test/related-flow-integrity.test.ts`: 5 PASS. Existing service-creation and admin-photo/click suites: 5 additional tests PASS.
+2. Wider sweep: result-integrity, sponsor submission/cancellation, offline report evidence, and existing sponsor self-service suites: 26 tests PASS. Earlier service-creation and admin-photo/click suites: 5 additional tests PASS.
 3. Signed-in Playwright at 1440×1000 and 390×844: sponsor review, identity suggestions, and portability opened as the requester without page exceptions or document-wide horizontal overflow. Audit reload returned the existing shared-backend detailed-query error; it was visible and export stayed disabled before/after reload. Screenshots confirmed the mobile heading was readable.
 4. Preview compilation reported `build OK`; whitespace checks passed.
 
@@ -35,3 +35,29 @@ The existing restoration endpoint's source is corrected but has not been deploye
 - No finding was marked fixed or ignored. Local tests do not establish deployed remediation.
 
 Next gate: authorize applying the local candidate and deploying source corrections, then exercise populated flows against a complete disposable application backend before claiming full homologation.
+
+## Wider sweep inventory
+
+Rule: a supported change must persist and be audited before it is reported as applied; unavailable or incomplete evidence must not be reported as success. Settled records remain untouched.
+
+| Place actually read or run | Compliance after local correction | Evidence / remaining limit |
+| --- | --- | --- |
+| Admin sponsor review screen and before/after diff | Read failures surfaced; invalid/renewal approvals blocked. Diff is text-only and makes no mutation claim. | Both files read; review screen opened at desktop/mobile. Populated review not available. |
+| Sponsor edit-campaign page, request form, renewal button, history and cancellation controls | History loading/failure no longer becomes an empty queue with an enabled form. Submission requires a returned receipt. Thrown cancellation errors no longer escape handling or report success. | All source read; receipt/cancellation regressions run. Actual sponsor account flow not run. |
+| `sponsor_submit_change_request` | Existing owner/allowlist/quota/audit rules preserved; local candidate rejects null changes and missing sponsor before inserting a receipt. | Current definition read and candidate tested locally. Real notifications/triggers/row policies unverified. |
+| `admin_review_sponsor_change_request`, its audit insertion and contact-notification loop | Local candidate atomically rejects unsupported approval, updates allowed fields, audits, and inserts notifications. | Local regressions pass; deployed definition remains unchanged. Delivery not tested. |
+| `sponsor_cancel_change_request` | Local candidate locks the same pending row as review, preserving settled status and audit atomicity. | Code read and sequential local regression run; concurrent integration not certified. |
+| Identity suggestion page and dashboard section registry | Both use the corrected shared widget. Read failures visible; unknown action results cannot remove the item as success. | Page, registry and widget read; page opened desktop/mobile. Populated application unavailable. |
+| `resolve_identity_suggestion` apply/dismiss and audit | Local candidate locks rows and uses real audit columns; failure rolls back; settled suggestions unchanged. | Field/alias/ownership/audit/dismiss/rollback local regressions pass. Actual authentication/triggers/policies unverified. |
+| Audit tab, reload and detailed export | Incomplete detail is visible and export remains disabled. Mobile heading readable. | Code read; signed-in read/reload verified on desktop/mobile; live detailed query still fails pending local candidate deployment. |
+| `audit_user_ref_health` and `audit_user_ref_full_detailed` | Summary remains admin-gated/invoker and unchanged. Detailed local candidate qualifies catalog names and stops suppressing sample errors. | Definitions read; live summary succeeds; detailed candidate locally tested. |
+| Restoration tab individual checks, run-all and final summary | Requires explicit success and verified audit evidence. Skipped manifest is failure, old results are discarded, overlapping runs disabled, automatic checks do not claim manual steps complete. | Code read and pure response regressions run; actual restoration UI actions not run. |
+| Restoration endpoint schema-integrity and audit smoke checks | Requires caller-scoped verified audits; no success on missing coverage. | Code read; pure helper regressions pass; legacy endpoint source not deployed or executed. |
+| Restoration endpoint storage inventory and manifest comparison | Listing failures propagate; directories paginated; partial/unhashed inventories cannot succeed; empty/unsupported/unverifiable manifests rejected. | Code read and helper tests run; real storage actions not executed. Existing sampling/settings unchanged. |
+| Dashboard layout, periodic health widget, `validate_db_health`, health details/history | Structural presence is not business-action certification. Persistence errors checked before throttling; history read errors shown. | Layout/widget/details and current function read. Periodic timing unchanged; persistence/history failure integration not executed. |
+| Offline restore-bundle utility | Its dry-run flag remains explicit; it is not accepted as completed restoration by the consolidated report. | Code read only; uploads not run, no target credentials available. |
+| Offline validate-restore utility | Incomplete media reads/empty manifest cannot certify full validation. | Code read and changed; target-dependent execution not available. |
+| Offline migration-report utility | Requires successful non-dry-run restoration and successful validation with matching counts. Missing or failed reports cannot be inferred successful. | Actual utility run with synthetic ZIP/reports: 4 regression cases pass. |
+| Scheduled database jobs | No direct matching consumers found for these functions/tables. | Current read-only cron query returned zero matches; indirectly invoked jobs remain unverified. |
+
+Further sweep corrections are source-only. No paid, sent, closed or other settled records, settings, permissions, production credentials, or live example data were modified. A browser recheck initially timed out opening mobile review; a fresh run completed all six page/viewport checks without exceptions. This does not certify the unavailable populated flows.

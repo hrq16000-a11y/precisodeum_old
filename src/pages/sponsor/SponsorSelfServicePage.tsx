@@ -7,6 +7,8 @@ import SponsorChangeRequestForm from '@/components/sponsors/SponsorChangeRequest
 import SponsorChangeRequestList from '@/components/sponsors/SponsorChangeRequestList';
 import { Loader2 } from 'lucide-react';
 import type { ChangeRequestRow } from '@/lib/sponsorSelfService';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SponsorSelfServicePage = () => {
   const { sponsor, loading } = useSponsorAuth();
@@ -15,10 +17,11 @@ const SponsorSelfServicePage = () => {
     queryKey: ['sponsor-change-requests', sponsor?.id],
     enabled: !!sponsor?.id,
     queryFn: async () => {
+      if (!sponsor?.id) throw new Error('Patrocinador indisponível.');
       const { data, error } = await supabase
         .from('sponsor_change_requests' as any)
         .select('*')
-        .eq('sponsor_id', sponsor!.id)
+        .eq('sponsor_id', sponsor.id)
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
@@ -53,6 +56,12 @@ const SponsorSelfServicePage = () => {
           </p>
         </div>
 
+        {requestsQuery.isPending ? <Skeleton className="h-48 w-full" /> : requestsQuery.isError ? (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>Não foi possível conferir seu histórico. Recarregue antes de enviar outra solicitação.</p>
+            <Button variant="outline" onClick={() => void requestsQuery.refetch()}>Tentar novamente</Button>
+          </div>
+        ) : <>
         <SponsorChangeRequestForm
           sponsorId={sponsor.id}
           snapshot={sponsor as unknown as Record<string, unknown>}
@@ -61,6 +70,7 @@ const SponsorSelfServicePage = () => {
         />
 
         <SponsorChangeRequestList rows={rows} onChanged={refetch} />
+        </>}
       </div>
     </SponsorLayout>
   );

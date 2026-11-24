@@ -1,4 +1,6 @@
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { flowErrorMessage } from '@/lib/relatedFlowIntegrity';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
@@ -27,15 +29,21 @@ interface Props {
 }
 
 const SponsorChangeRequestList = ({ rows, onChanged }: Props) => {
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const cancel = async (id: string) => {
+    if (cancelling !== null) return;
     if (!confirm('Cancelar esta solicitação?')) return;
-    const { error } = await supabase.rpc('sponsor_cancel_change_request' as any, { _id: id });
-    if (error) {
-      toast.error(error.message);
-      return;
+    setCancelling(id);
+    try {
+      const { error } = await supabase.rpc('sponsor_cancel_change_request' as any, { _id: id });
+      if (error) throw error;
+      toast.success('Solicitação cancelada.');
+      onChanged();
+    } catch (error) {
+      toast.error(flowErrorMessage(error, 'Não foi possível confirmar o cancelamento. Recarregue o histórico.'));
+    } finally {
+      setCancelling(null);
     }
-    toast.success('Solicitação cancelada.');
-    onChanged();
   };
 
   if (rows.length === 0) {
@@ -69,7 +77,7 @@ const SponsorChangeRequestList = ({ rows, onChanged }: Props) => {
                   </span>
                 </div>
                 {r.status === 'pending' && (
-                  <Button size="sm" variant="outline" onClick={() => cancel(r.id)}>
+                  <Button size="sm" variant="outline" onClick={() => cancel(r.id)} disabled={cancelling !== null}>
                     Cancelar
                   </Button>
                 )}

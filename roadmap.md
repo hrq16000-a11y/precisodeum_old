@@ -2,6 +2,7 @@
 
 ## Approved related-flow corrections (2026-11-24)
 
+- [x] Sweep sponsor self-service/history, restoration UI/endpoint, offline reports, dashboard consumers, and direct scheduled jobs; correct remaining false-success/read failures locally.
 - [x] Implement local sponsor review/cancellation and identity apply/dismiss corrections, preserving settled records, permissions, and settings.
 - [x] Implement local detailed audit, incomplete exports, suggestion read errors, and health/restoration reporting corrections.
 - [x] Run local function regressions and desktop/mobile checks; document limits in docs/security/local-fixes/README.md.

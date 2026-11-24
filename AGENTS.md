@@ -17,3 +17,4 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Run destructive function checks only in a disposable local database with synthetic fixtures; stubbed function tests do not certify application, trigger, or RLS integration.
 - Keep unapplied local database corrections in docs/security/local-fixes until deployment is authorized; do not modify applied migration history.
 - Sponsor review/cancellation and identity resolution lock pending rows and commit audit records atomically; incomplete audit reads must never enable detailed exports or certify restoration.
+- Restoration success requires explicit complete evidence from the current run; skipped checks, partial inventories, and dry runs never certify completion.

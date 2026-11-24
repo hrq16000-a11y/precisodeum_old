@@ -33,3 +33,15 @@ export function flowErrorMessage(error: unknown, fallback: string): string {
   return typeof error === 'object' && error !== null && 'message' in error &&
     typeof error.message === 'string' ? error.message : fallback;
 }
+
+export function requireSubmittedRequest(data: unknown): string {
+  if (typeof data !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data))
+    throw new Error('Não foi possível confirmar o envio. Recarregue o histórico antes de tentar novamente.');
+  return data;
+}
+
+export function restoreStepSucceeded(action: string, data: unknown): boolean {
+  if (typeof data !== 'object' || data === null || !('ok' in data) || data.ok !== true) return false;
+  if (action === 'schema-integrity') return 'audit_verified' in data && data.audit_verified === true;
+  return true;
+}

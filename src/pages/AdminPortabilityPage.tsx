@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { flowErrorMessage, isAuditComplete } from "@/lib/relatedFlowIntegrity";
+import { flowErrorMessage, isAuditComplete, restoreStepSucceeded } from "@/lib/relatedFlowIntegrity";
 import {
   Archive, Download, ShieldCheck, Loader2, FileText,
   CheckCircle2, Circle, Eye, EyeOff, Trash2, RefreshCw, ListChecks, Server, Webhook,
@@ -987,6 +987,7 @@ function RestoreTab() {
   const [manifest, setManifest] = useState<unknown | null>(null);
   const [manifestName, setManifestName] = useState<string>("");
   const [finalSummary, setFinalSummary] = useState<{ ok: number; failed: number; failures: string[] } | null>(null);
+  const [runningAll, setRunningAll] = useState(false);
 
   const log = (step: string, level: "info" | "ok" | "error", msg: string, data?: unknown) => {
     setLogs((l) => [...l, { step, ts: new Date().toISOString(), level, msg, data }]);
@@ -1006,13 +1007,14 @@ function RestoreTab() {
     }
   };
 
-  const runAction = async (step: RestoreStep) => {
-    if (step.action === "manual") return;
+  const runAction = async (step: RestoreStep): Promise<boolean> => {
+    if (step.action === "manual") return false;
     if (step.action === "manifest-compare" && !manifest) {
       toast.error("Carregue o storage-manifest.json antes de comparar.");
-      return;
+      return false;
     }
     setRunning(step.id);
+    setResults((r) => ({ ...r, [step.id]: 'pending' }));
     log(step.id, "info", `Iniciando "${step.title}"...`);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1029,40 +1031,48 @@ function RestoreTab() {
         body: isPost ? JSON.stringify({ manifest }) : undefined,
       });
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `Falha na verificação (${res.status}).`);
       if (json.error) throw new Error(json.error);
-      const ok = json.ok !== false;
+      const ok = restoreStepSucceeded(step.action, json);
       log(step.id, ok ? "ok" : "error", ok ? "Etapa concluída com sucesso." : "Falha detectada.", json);
       setResults((r) => ({ ...r, [step.id]: ok ? "ok" : "error" }));
       if (ok) toast.success(`${step.title} OK`);
       else toast.error(`Falha em: ${step.title}`);
+      return ok;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       log(step.id, "error", msg);
       setResults((r) => ({ ...r, [step.id]: "error" }));
       toast.error(msg);
+      return false;
     } finally {
       setRunning(null);
     }
   };
 
   const runAll = async () => {
+    setRunningAll(true);
     setFinalSummary(null);
+    setResults({});
+    const current: Record<string, boolean> = {};
+    try {
     for (const s of RESTORE_STEPS) {
       if (s.action !== "manual") {
         if (s.action === "manifest-compare" && !manifest) {
           log(s.id, "info", "Etapa pulada: nenhum manifest carregado.");
+          current[s.id] = false;
           continue;
         }
-        await runAction(s);
+        current[s.id] = await runAction(s);
       }
     }
     // build final summary
-    setResults((current) => {
-      const failed = Object.entries(current).filter(([, v]) => v === "error").map(([k]) => k);
-      const ok = Object.values(current).filter((v) => v === "ok").length;
+      const failed = Object.entries(current).filter(([, v]) => !v).map(([k]) => k);
+      const ok = Object.values(current).filter(Boolean).length;
       setFinalSummary({ ok, failed: failed.length, failures: failed });
-      return current;
-    });
+    } finally {
+      setRunningAll(false);
+    }
   };
 
   const exportLogs = () => {
@@ -1112,7 +1122,7 @@ function RestoreTab() {
             <Button variant="outline" size="sm" onClick={exportLogs} disabled={logs.length === 0}>
               <Download className="size-4 mr-2" />Exportar logs
             </Button>
-            <Button size="sm" onClick={runAll} disabled={!!running}>
+            <Button size="sm" onClick={runAll} disabled={!!running || runningAll}>
               <PlayCircle className="size-4 mr-2" />Rodar todas as automáticas
             </Button>
           </div>
@@ -1134,7 +1144,7 @@ function RestoreTab() {
                     <p className="text-xs text-muted-foreground mt-0.5">{s.hint}</p>
                   </div>
                   {s.action !== "manual" && (
-                    <Button size="sm" onClick={() => runAction(s)} disabled={running === s.id}>
+                    <Button size="sm" onClick={() => runAction(s)} disabled={running !== null || runningAll}>
                       {running === s.id ? <Loader2 className="size-4 mr-2 animate-spin" /> : <PlayCircle className="size-4 mr-2" />}
                       Executar
                     </Button>
@@ -1151,7 +1161,7 @@ function RestoreTab() {
             <div className={`mt-3 border rounded-lg p-3 ${finalSummary.failed === 0 ? "border-green-500/40 bg-green-500/5" : "border-destructive/40 bg-destructive/5"}`}>
               <div className="font-semibold text-sm flex items-center gap-2">
                 {finalSummary.failed === 0
-                  ? <><CheckCircle2 className="size-4 text-green-600" />Restore validado — pacote pronto.</>
+                  ? <><CheckCircle2 className="size-4 text-green-600" />Verificações automáticas concluídas — etapas manuais pendentes.</>
                   : <><XCircle className="size-4 text-destructive" />Restore com divergências.</>}
               </div>
               <div className="text-xs mt-1">

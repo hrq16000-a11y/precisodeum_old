@@ -2,6 +2,19 @@
 BEGIN;
 SET test.uid='11111111-1111-1111-1111-111111111111';
 SET test.role='admin';
+DO $$
+BEGIN
+ BEGIN
+  PERFORM sponsor_submit_change_request('00000000-0000-0000-0000-000000000000',NULL);
+  RAISE EXCEPTION 'Null submission accepted';
+ EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ BEGIN
+  PERFORM sponsor_submit_change_request('00000000-0000-0000-0000-000000000000','{"phone":"12345678"}');
+  RAISE EXCEPTION 'Missing sponsor submission accepted';
+ EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ IF EXISTS(SELECT 1 FROM sponsor_change_requests) OR EXISTS(SELECT 1 FROM audit_log) THEN RAISE EXCEPTION 'Invalid submission persisted'; END IF;
+ RAISE NOTICE 'PASS: null submission and missing sponsor cannot produce receipts';
+END $$;
 INSERT INTO sponsors(id,secret) VALUES('22222222-2222-2222-2222-222222222222','preserve');
 INSERT INTO profiles(id,full_name) VALUES(auth.uid(),'original');
 INSERT INTO sponsor_contacts VALUES('22222222-2222-2222-2222-222222222222',auth.uid());

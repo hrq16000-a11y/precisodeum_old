@@ -8,7 +8,7 @@
 // Admin-only.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { restoreCoverageStatus } from "../_shared/restoreAuditIntegrity.ts";
+import { checksumInventoryComplete, restoreCoverageStatus, validChecksumManifest } from "../_shared/restoreAuditIntegrity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,10 +53,11 @@ async function listAllFiles(
   prefix = "",
 ): Promise<{ path: string; size: number }[]> {
   const out: { path: string; size: number }[] = [];
+  for (let offset = 0; ; offset += 1000) {
   const { data, error } = await admin.storage.from(bucketId).list(prefix, {
-    limit: 1000,
+    limit: 1000, offset, sortBy: { column: 'name', order: 'asc' },
   });
-  if (error || !data) return out;
+  if (error || !Array.isArray(data)) throw new Error(`Unable to list ${bucketId}: ${error?.message ?? 'invalid response'}`);
   for (const item of data) {
     if (!item.name || item.name === ".emptyFolderPlaceholder") continue;
     const full = prefix ? `${prefix}/${item.name}` : item.name;
@@ -65,6 +66,8 @@ async function listAllFiles(
     } else {
       out.push({ path: full, size: (item.metadata as any)?.size || 0 });
     }
+  }
+  if (data.length < 1000) break;
   }
   return out;
 }
@@ -236,7 +239,7 @@ Deno.serve(async (req) => {
         });
       }
       return new Response(
-        JSON.stringify({ buckets: out, generated_at: new Date().toISOString() }),
+        JSON.stringify({ ok: wantHash && checksumInventoryComplete(out), buckets: out, generated_at: new Date().toISOString() }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -246,7 +249,7 @@ Deno.serve(async (req) => {
     if (action === "storage-checksums-compare" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const manifest = body?.manifest;
-      if (!manifest?.buckets || !Array.isArray(manifest.buckets)) {
+      if (!validChecksumManifest(manifest, STORAGE_BUCKETS)) {
         return new Response(
           JSON.stringify({ error: "invalid manifest payload" }),
           {
