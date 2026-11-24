@@ -1,5 +1,57 @@
 # Preciso de Um 360° — Rodada 2A
 
+## Complemento 2A.3 — sincronização segura (2026-11-24)
+
+**Sincronização bloqueada; NO-GO para homologação e publicação.** Executada
+somente a micro-rodada imediatamente autorizada. Não iniciado o workflow,
+melhoria de imagens, painel administrativo ou nova inspeção de segurança.
+
+Consultas GET pela conexão **Henrique's GitHub API** e comparação somente de
+objetos Git já disponíveis localmente; sem fetch, push, merge, alteração de
+branch, API de escrita ou tentativa de corrigir o vínculo Git sync.
+
+| Item | Resultado |
+| --- | --- |
+| Repositório | `hrq16000-a11y/precisodeum_old`: confirmado por GET HTTP 200; vínculo na configuração Lovable não verificável pelo agente |
+| Branch | Local `main`; remoto `main`; branch efetivamente configurada no Git sync não verificável |
+| Commit local no início da inspeção | `f2775df7693b523eefa56439a66f8db7e25fb914`; árvore limpa |
+| Commit remoto | `01d64b3e2b03df0d88a15aa341413e2ff78fc895` (GET da referência, HTTP 200) |
+| Candidato indicado no anexo | `231369e31c2392d217f33cab3b2685193b73471e`: HTTP 422, No commit found for SHA; é anterior ao complemento de limpeza |
+| Complemento de evidências/limpeza | `ac783cc7fbb4476869327201c2600f1567fa70ee`: HTTP 422, No commit found for SHA |
+| HEAD local no GitHub | `f2775df7693b523eefa56439a66f8db7e25fb914`: HTTP 422, No commit found for SHA |
+| Históricos | SHA remoto existe localmente e é o merge-base: 0 commits exclusivos remotos e 21 exclusivos locais; não há divergência de ancestralidade nesta amostra |
+| Permissões da conexão API | GitHub informa pull/push/maintain/admin; isso não certifica a autorização da integração Git sync nem a função do usuário no projeto Lovable |
+| Sincronização | Bloqueada: agente não pode consultar/acionar a configuração oficial do Git sync; candidatos não confirmados no destino |
+| Workflow | Arquivo em `main` retornou HTTP 404; existe e está versionado localmente; disponibilidade remota pendente |
+| Conflitos | Nenhum conflito local pendente; ancestralidade compatível. Não foi realizada mesclagem nem certificada ausência de alterações externas posteriores |
+| Homologação | PENDENTE / NÃO EXECUTADA: sem run ID, URL, duração ou resultados novos; baseline, SQL candidato e limpeza remotos sem evidência |
+| Melhorias documentadas | Release B de imagens e proposta `/admin/homologacao`, vinculada a Policy Lineage, no roadmap; nenhuma implementação |
+| Arquivos modificados nesta micro-rodada | `roadmap.md` e este relatório; somente documentação |
+| Produção | Não alterada; sem banco, cadastros, fotos, permissões, DNS, scan ou publicação |
+| Decisão | NO-GO para homologação/publicação; continuidade depende da sincronização oficial |
+
+### Preservação e próxima ação mínima
+
+Todos os arquivos exigidos no anexo existem e estão versionados localmente,
+incluindo workflow, orquestrador, guards, tipos, verificador, probe MOCK, teste,
+SQL candidato, LOCAL_SETUP.md, AGENTS.md e roadmap. Também conferidos lifecycle,
+seus tipos/testes, correção/teste do PDF e seed. Diff desde `ac783cc7` vazio nos
+caminhos de infraestrutura, testes de segurança, PDF, seed e migrations;
+testes anteriormente aprovados não repetidos. Limpeza já implementada em 2A.1;
+nenhum recurso descartável iniciado agora e nenhuma limpeza Docker certificada.
+
+**Instrução ao proprietário:** em **Configurações do projeto → Git**, conferir
+que o vínculo existente aponta para `hrq16000-a11y/precisodeum_old`, branch
+`main`, e informar o status exibido. Não desconectar/reconectar ou criar outro
+repositório. Re-check, se disponível, consulta status; não garante envio.
+A conexão da API usada nesta inspeção é separada do Git sync.
+
+Depois de o mecanismo oficial disponibilizar os commits e o workflow, confirmar
+novamente SHA/branch/arquivos antes de preparar a execução da rotina existente.
+Não executar `main` como se fosse o candidato enquanto faltarem essas evidências.
+Não foi enviado dispatch nem simulada homologação. O SHA desta documentação
+será posterior ao HEAD inspecionado e também não deve ser presumido remoto.
+
 ## Complemento 2A.1 — evidências e limpeza (2026-11-24)
 
 **GO para continuidade da infraestrutura; NO-GO para integração completa e
