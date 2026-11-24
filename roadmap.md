@@ -1,5 +1,11 @@
 # Roadmap — SEO, Moderação, Telemetria e Admin
 
+## Roteiro 360° — Rodada 1 (2026-11-24)
+
+- [x] Ler o roteiro completo e reutilizar relatórios e scan existentes; nenhuma outra rodada iniciada.
+- [x] Corrigir apenas injeção de código comprovada no PDF de contatos e validar com entradas sintéticas, sem alterar dados reais (4 testes + navegador 390/768/1440 PASS).
+- [x] Entregar relatório com evidências, estados, migrations pendentes e limite de correspondência preview/produção; sem publicação, NO-GO mantido.
+
 ## Rodada 2B — escopo restrito (2026-11-24)
 
 - [x] Ler novamente consumidores relacionados, sete funções atuais e agendamentos diretos; registrar conformidade e limites, sem ampliar correções.

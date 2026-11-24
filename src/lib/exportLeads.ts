@@ -1,4 +1,4 @@
-import type { LeadRow, LeadHistoryEntry, LeadStatus } from '@/hooks/useLeadFollowup';
+import type { LeadRow, LeadHistoryEntry } from '@/hooks/useLeadFollowup';
 import { STATUS_META } from '@/hooks/useLeadFollowup';
 
 const STATUS_LABEL = (s: string) => (STATUS_META as any)[s]?.label ?? s;
@@ -63,16 +63,16 @@ export function exportLeadsCsv(input: ExportInput) {
 
 export function exportLeadsPdf(input: ExportInput) {
   const leads = filterByRange(input.leads, input.range);
-  const provider = input.providerName ? `<p class="sub">Profissional: <strong>${input.providerName}</strong></p>` : '';
+  const provider = input.providerName ? `<p class="sub">Profissional: <strong>${escapeHtml(input.providerName)}</strong></p>` : '';
   const range = input.range && (input.range.from || input.range.to)
-    ? `<p class="sub">Período: ${input.range.from || '—'} até ${input.range.to || '—'}</p>` : '';
+    ? `<p class="sub">Período: ${escapeHtml(input.range.from || '—')} até ${escapeHtml(input.range.to || '—')}</p>` : '';
 
   const cards = leads.map(l => {
     const h = input.history[l.id] || [];
     const events = h.slice(0, 30).map(e => `
-      <li><span class="t">${fmtDate(e.created_at)}</span>
-        <span class="badge">${e.entry_type}</span>
-        ${e.old_status && e.new_status ? `<em>${STATUS_LABEL(e.old_status)} → ${STATUS_LABEL(e.new_status)}</em>` : ''}
+      <li><span class="t">${escapeHtml(fmtDate(e.created_at))}</span>
+        <span class="badge">${escapeHtml(e.entry_type)}</span>
+        ${e.old_status && e.new_status ? `<em>${escapeHtml(STATUS_LABEL(e.old_status))} → ${escapeHtml(STATUS_LABEL(e.new_status))}</em>` : ''}
         ${e.message ? `<div class="msg">${escapeHtml(e.message)}</div>` : ''}
       </li>`).join('');
     return `
@@ -80,10 +80,10 @@ export function exportLeadsPdf(input: ExportInput) {
         <header>
           <h3>${escapeHtml(l.client_name)} <small>(${escapeHtml(l.phone)})</small></h3>
           <div class="meta">
-            <span class="pill">${STATUS_LABEL(l.status)}</span>
-            <span>Score ${l.lead_score ?? 0}</span>
-            <span>Criado: ${fmtDate(l.created_at)}</span>
-            ${l.next_followup_at ? `<span>Próx: ${fmtDate(l.next_followup_at)}</span>` : ''}
+            <span class="pill">${escapeHtml(STATUS_LABEL(l.status))}</span>
+            <span>Score ${escapeHtml(String(l.lead_score ?? 0))}</span>
+            <span>Criado: ${escapeHtml(fmtDate(l.created_at))}</span>
+            ${l.next_followup_at ? `<span>Próx: ${escapeHtml(fmtDate(l.next_followup_at))}</span>` : ''}
           </div>
         </header>
         ${l.service_needed ? `<p class="svc">${escapeHtml(l.service_needed)}</p>` : ''}
@@ -130,5 +130,5 @@ ${cards || '<p style="margin-top:20px;color:#94a3b8;">Nenhum lead no período se
 }
 
 function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] ?? c));
 }

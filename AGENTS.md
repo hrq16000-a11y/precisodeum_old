@@ -20,3 +20,4 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 - Restoration success requires explicit complete evidence from the current run; skipped checks, partial inventories, and dry runs never certify completion.
 - Identity apply/dismiss audit metadata records field and suggestion identifiers, not old/new values or source text, so audit provenance does not duplicate sensitive identity data.
 - Health success requires a complete current read and confirmed history persistence; recovery notifications follow the history write so unavailable evidence cannot certify recovery.
+- Lead print reports escape every externally supplied text interpolation before document writing, including profile names and URL-derived filters, so exporting cannot execute user-supplied code.

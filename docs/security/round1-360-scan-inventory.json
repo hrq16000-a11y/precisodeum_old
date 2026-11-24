@@ -1,0 +1,259 @@
+{
+  "agent_security_v2": {
+    "timestamp": "2026-11-23T22:26:47.41827993Z",
+    "up_to_date": false,
+    "completion_status": "complete",
+    "findings": [
+      {
+        "internal_id": "lov_finding_15028be0c4e0b75d_423da460",
+        "level": "warn",
+        "name": "Ads.txt check fetches a caller-chosen host"
+      },
+      {
+        "internal_id": "lov_finding_15028be0c4e0b75d_6cb22a18",
+        "level": "warn",
+        "name": "Any signed-in admin can make site checks visit outside sites"
+      },
+      {
+        "internal_id": "lov_finding_18c60d8506263072",
+        "level": "warn",
+        "name": "Anyone can plant formulas in provider lead exports"
+      },
+      {
+        "internal_id": "lov_finding_27751650301d6735",
+        "level": "warn",
+        "name": "Anyone can plant formulas in lead exports"
+      },
+      {
+        "internal_id": "lov_finding_3ac58bda196e1252",
+        "level": "warn",
+        "name": "Any signed-in user can plant formulas in review backups"
+      },
+      {
+        "internal_id": "lov_finding_4325c2a3fa6fba5c",
+        "level": "warn",
+        "name": "An admin can make your server fetch any web address"
+      },
+      {
+        "internal_id": "lov_finding_447b18df2e56922f",
+        "level": "warn",
+        "name": "Anyone can plant formulas in sponsor-lead exports"
+      },
+      {
+        "internal_id": "lov_finding_48df12c0e1df6fc7",
+        "level": "warn",
+        "name": "Anyone can plant formulas in opportunity lead exports"
+      },
+      {
+        "internal_id": "lov_finding_4c6632f0917c41e6",
+        "level": "warn",
+        "name": "Anyone can run script in a provider's browser via a link"
+      },
+      {
+        "internal_id": "lov_finding_597b8678a7f34353",
+        "level": "warn",
+        "name": "Any signed-in user can plant formulas in user exports"
+      },
+      {
+        "internal_id": "lov_finding_5c98e790929bfaee",
+        "level": "warn",
+        "name": "Any signed-in user can publish an unapproved provider profile"
+      },
+      {
+        "internal_id": "lov_finding_6069de8b73d14c52",
+        "level": "warn",
+        "name": "Any signed-in admin can send alerts to any email address"
+      },
+      {
+        "internal_id": "lov_finding_6ac5681a8af25ed9",
+        "level": "warn",
+        "name": "Any signed-in admin can route feeds off-site"
+      },
+      {
+        "internal_id": "lov_finding_716d14c61ebab52e",
+        "level": "warn",
+        "name": "Anyone can plant formulas in review exports"
+      },
+      {
+        "internal_id": "lov_finding_93f5c8d71f0a8471",
+        "level": "warn",
+        "name": "Any admin can import unrestricted files"
+      },
+      {
+        "internal_id": "lov_finding_98c90de471d8c286",
+        "level": "warn",
+        "name": "Providers can plant formulas in service-photo exports"
+      },
+      {
+        "internal_id": "lov_finding_a28ff6baf30177e1",
+        "level": "warn",
+        "name": "Anyone with an old link can download private archives"
+      },
+      {
+        "internal_id": "lov_finding_a637c991f2cfd872",
+        "level": "warn",
+        "name": "Any signed-in user can publish an agency without approval"
+      },
+      {
+        "internal_id": "lov_finding_b4d0b0edcf0d6a6f_5aee1646",
+        "level": "warn",
+        "name": "Token generation accepts a caller-selected Search Console site"
+      },
+      {
+        "internal_id": "lov_finding_b4d0b0edcf0d6a6f_7e742c07",
+        "level": "warn",
+        "name": "Caller-selected sites reach Search Console verification"
+      },
+      {
+        "internal_id": "lov_finding_b4d0b0edcf0d6a6f_7ef72fea",
+        "level": "warn",
+        "name": "Caller-selected targets reach sitemap deletion"
+      },
+      {
+        "internal_id": "lov_finding_b4d0b0edcf0d6a6f_b4dff755",
+        "level": "warn",
+        "name": "Site addition accepts a caller-selected Search Console site"
+      },
+      {
+        "internal_id": "lov_finding_b4d0b0edcf0d6a6f_b8e2e45c",
+        "level": "warn",
+        "name": "Caller-selected targets reach sitemap submission"
+      },
+      {
+        "internal_id": "lov_finding_b4d0b0edcf0d6a6f_ea779e5a",
+        "level": "warn",
+        "name": "Sitemap listing accepts a caller-selected Search Console site"
+      },
+      {
+        "internal_id": "lov_finding_cb2f403161cdfae5",
+        "level": "warn",
+        "name": "Any signed-in user can replace another user's public images"
+      },
+      {
+        "internal_id": "lov_finding_d8a9cc6d040ee42e",
+        "level": "warn",
+        "name": "Sponsors can plant formulas in sponsor exports"
+      },
+      {
+        "internal_id": "lov_finding_e47f8964b1049c8b",
+        "level": "warn",
+        "name": "Any signed-in admin can make sitemap checks visit outside sites"
+      },
+      {
+        "internal_id": "lov_finding_e4edb43dc5ce4a14",
+        "level": "warn",
+        "name": "Anyone can take over a sponsor record by claiming its email"
+      },
+      {
+        "internal_id": "lov_finding_fca16bb3341ccc28",
+        "level": "warn",
+        "name": "Providers can plant formulas in provider exports"
+      }
+    ]
+  },
+  "app_mcp": {
+    "timestamp": "2026-11-24T03:56:15.044689027Z",
+    "up_to_date": true,
+    "completion_status": "complete",
+    "findings": []
+  },
+  "app_mcp_deep": {
+    "timestamp": "2026-11-23T22:26:47.41827993Z",
+    "up_to_date": false,
+    "completion_status": "complete",
+    "findings": []
+  },
+  "lov_pgscan": {
+    "timestamp": "2026-11-24T01:42:41.989835397Z",
+    "up_to_date": false,
+    "completion_status": "complete",
+    "findings": [
+      {
+        "internal_id": "lov_db_rls_authenticated_only_v1_71ff59403ae3b624",
+        "level": "warn",
+        "name": "Whoever signs up can read every record in chat_settings"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_2ea1bc3ba4dce702",
+        "level": "info",
+        "name": "Anyone can read every record in gamification_levels"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_5361f70dbf7d0145",
+        "level": "info",
+        "name": "Anyone can read every record in categories"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_8f30cb5f217f5b9c",
+        "level": "info",
+        "name": "Anyone can read every record in states"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_93e71f19b632aa4f",
+        "level": "info",
+        "name": "Anyone can read every record in ui_bottom_nav_items"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_96aff8b843c427e5",
+        "level": "info",
+        "name": "Anyone can read every record in account_types"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_9f2995456b60b2c3",
+        "level": "info",
+        "name": "Anyone can read every record in service_images"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_a3658d665fb30ebe",
+        "level": "info",
+        "name": "Anyone can read every record in ad_slots"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_aa89ee18f71b7741",
+        "level": "warn",
+        "name": "Anyone can read every record in ui_bottom_nav_config"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_abcaa1f5be8dbb7a",
+        "level": "info",
+        "name": "Anyone can read every record in cities"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_b078c9eb803ffbf2",
+        "level": "info",
+        "name": "Anyone can read every record in service_categories"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_b3b09176644c8b43",
+        "level": "info",
+        "name": "Anyone can read every record in neighborhoods"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_c220f5d455ad3594",
+        "level": "info",
+        "name": "Anyone can read every record in popular_services"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_d88b6ba25ef85161",
+        "level": "info",
+        "name": "Anyone can read every record in pwa_install_settings"
+      },
+      {
+        "internal_id": "lov_db_rls_tautology_permissive_v1_e3f4cc4b28b0b784",
+        "level": "info",
+        "name": "Anyone can read every record in faqs"
+      },
+      {
+        "internal_id": "lov_db_storage_objects_owner_unbound_v1_b39f4103ee0e0f0e",
+        "level": "info",
+        "name": "A rule lets anyone list public files"
+      }
+    ]
+  },
+  "supply_chain": {
+    "timestamp": "2026-11-23T22:09:22.888793368Z",
+    "up_to_date": false,
+    "completion_status": "complete",
+    "findings": []
+  }
+}
