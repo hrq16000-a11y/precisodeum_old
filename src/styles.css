@@ -836,3 +836,13 @@ button, a, [role="button"] {
     transform: none !important;
   }
 }
+
+
+/* Home R2: a brief, fail-open transition; no blur, bounce or layout animation. */
+@keyframes hero-phrase-enter {
+  from { opacity: 0.94; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-phrase-enter { animation: hero-phrase-enter 160ms cubic-bezier(0.22, 1, 0.36, 1); }
+}

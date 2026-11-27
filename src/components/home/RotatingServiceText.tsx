@@ -84,6 +84,7 @@ const POOL_SLUGS = HERO_CATEGORY_POOL.map((c) => c.slug);
 const POOL_BY_SLUG = new Map(HERO_CATEGORY_POOL.map((c) => [c.slug, c]));
 
 interface Props {
+  paused?: boolean;
   onServiceChange?: (service: string) => void;
   /**
    * Notificado a cada troca de frase com a categoria atual e o tipo de
@@ -94,11 +95,11 @@ interface Props {
 }
 
 const HOLD_MS = 3200;
-const FADE_OUT_MS = 700;
-const FADE_IN_MS = 900;
+const FADE_OUT_MS = 0;
+const FADE_IN_MS = 160;
 const FADE_MS = FADE_OUT_MS + FADE_IN_MS;
 
-const RotatingServiceText = ({ onServiceChange, onPhraseChange }: Props) => {
+const RotatingServiceText = ({ paused = false, onServiceChange, onPhraseChange }: Props) => {
   const { data: dbCategories } = useQuery({
     queryKey: ['hero-rotating-categories'],
     queryFn: async () => {
@@ -135,32 +136,29 @@ const RotatingServiceText = ({ onServiceChange, onPhraseChange }: Props) => {
   }
 
 
+  const appliedCategories = useRef<HeroCategoryInput[] | null>(null);
+  const [orderVersion, setOrderVersion] = useState(0);
   const [serviceIdx, setServiceIdx] = useState(0);
   const [prefixIdx, setPrefixIdx] = useState<0 | 1>(0);
 
-  // Frase anterior mantida no DOM brevemente para crossfade (fade-out suave).
-  const [prevPhrase, setPrevPhrase] = useState<{
-    key: string;
-    prefix: string;
-    service: string;
-    isCallout: boolean;
-  } | null>(null);
-
   useEffect(() => {
+    if (paused || appliedCategories.current === categories) return;
     const { order, nextHistory } = pickNextOrder(categories);
     if (order.length === 0) return;
     orderRef.current = order;
+    appliedCategories.current = categories;
+    setOrderVersion((version) => version + 1);
     commitHistory(nextHistory);
     setServiceIdx(0);
     setPrefixIdx(0);
-  }, [categories]);
+  }, [categories, paused]);
 
   useEffect(() => {
     const current = orderRef.current[serviceIdx];
     if (!current) return;
     onServiceChange?.(current.label);
     markShown(current.slug);
-  }, [serviceIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [serviceIdx, orderVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const current = orderRef.current[serviceIdx];
@@ -170,21 +168,11 @@ const RotatingServiceText = ({ onServiceChange, onPhraseChange }: Props) => {
       label: current.label,
       prefix: prefixIdx === 0 ? 'need' : 'find',
     });
-  }, [serviceIdx, prefixIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [serviceIdx, prefixIdx, orderVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (paused) return;
     const timer = setTimeout(() => {
-      // captura frase atual para fade-out antes de trocar
-      const cur = orderRef.current[serviceIdx];
-      if (cur) {
-        const ph = buildPhrase(cur, prefixIdx === 0 ? 'need' : 'find');
-        setPrevPhrase({
-          key: `${serviceIdx}-${prefixIdx}`,
-          prefix: ph.prefix,
-          service: ph.service,
-          isCallout: ph.isCallout,
-        });
-      }
       setPrefixIdx((p) => {
         if (p === 0) return 1;
         setServiceIdx((idx) => {
@@ -202,20 +190,13 @@ const RotatingServiceText = ({ onServiceChange, onPhraseChange }: Props) => {
     }, HOLD_MS);
 
     return () => clearTimeout(timer);
-  }, [serviceIdx, prefixIdx, categories]);
-
-  // Limpa frase anterior depois do fade-out terminar
-  useEffect(() => {
-    if (!prevPhrase) return;
-    const t = setTimeout(() => setPrevPhrase(null), FADE_OUT_MS + 80);
-    return () => clearTimeout(t);
-  }, [prevPhrase]);
+  }, [serviceIdx, prefixIdx, categories, paused, orderVersion]);
 
   const current = orderRef.current[serviceIdx];
   if (!current) return null;
 
   const phrase = buildPhrase(current, prefixIdx === 0 ? 'need' : 'find');
-  const animKey = `${serviceIdx}-${prefixIdx}`;
+  const animKey = `${orderVersion}-${serviceIdx}-${prefixIdx}`;
 
   return (
     <span
@@ -223,36 +204,21 @@ const RotatingServiceText = ({ onServiceChange, onPhraseChange }: Props) => {
       data-current-slug={current.slug}
       data-current-prefix={phrase.prefixKind}
       data-current-article={phrase.category.article}
-      className="relative inline-grid place-items-center w-full max-w-full whitespace-nowrap"
-      aria-live="polite"
+      className="relative inline-grid place-items-center w-full max-w-full"
+      aria-live="off"
     >
       <span
-        key={`cur-${animKey}`}
+        key={animKey}
         style={{ gridArea: '1 / 1' }}
-        className="animate-hero-fade-in inline-flex flex-nowrap items-baseline justify-center gap-x-[0.35em] whitespace-nowrap"
+        className={`block max-w-full text-balance break-words${paused ? "" : " hero-phrase-enter"}`}
       >
-        <span className="animate-hero-prefix text-primary-foreground">{phrase.prefix}</span>
+        <span className="text-primary-foreground">{phrase.prefix}</span>
         {' '}
-        <span className="animate-hero-service text-secondary">
+        <span className="text-secondary">
           {phrase.service}
           {phrase.isCallout ? '!' : ''}
         </span>
       </span>
-      {prevPhrase && (
-        <span
-          key={`prev-${prevPhrase.key}`}
-          style={{ gridArea: '1 / 1' }}
-          aria-hidden="true"
-          className="animate-hero-fade-out inline-flex flex-nowrap items-baseline justify-center gap-x-[0.35em] whitespace-nowrap pointer-events-none"
-        >
-          <span className="text-primary-foreground">{prevPhrase.prefix}</span>
-          {' '}
-          <span className="text-secondary">
-            {prevPhrase.service}
-            {prevPhrase.isCallout ? '!' : ''}
-          </span>
-        </span>
-      )}
     </span>
   );
 };

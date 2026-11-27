@@ -23,7 +23,7 @@ const stubTracking = `
 `;
 
 test.describe('Hero rotator', () => {
-  test('crossfade troca prefix mantendo a categoria', async ({ page }) => {
+  test('troca prefix mantendo a categoria', async ({ page }) => {
     await page.addInitScript(stubTracking);
     await page.goto('/');
     const rotator = page.getByTestId('hero-rotating-text');
@@ -60,7 +60,7 @@ test.describe('Hero rotator', () => {
     expect(await rotator.getAttribute('data-current-slug')).toBe(slug);
   });
 
-  test('respeita prefers-reduced-motion sem quebrar rotação', async ({ browser }) => {
+  test('respeita prefers-reduced-motion mantendo a frase estável', async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await ctx.newPage();
     await page.goto('/');
@@ -73,9 +73,27 @@ test.describe('Hero rotator', () => {
     const prefix1 = await rotator.getAttribute('data-current-prefix');
     await page.waitForTimeout(3700);
     const prefix2 = await rotator.getAttribute('data-current-prefix');
-    expect(prefix2).not.toBe(prefix1);
+    expect(prefix2).toBe(prefix1);
+    await expect(rotator).toBeVisible();
 
     await ctx.close();
+  });
+
+  test('pausa e retoma sugestões sem ocultar conteúdo', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/');
+    const rotator = page.getByTestId('hero-rotating-text');
+    await expect(rotator).toBeVisible();
+    const pause = page.getByRole('button', { name: 'Pausar sugestões' });
+    await expect(pause).toBeVisible();
+    await pause.click();
+    const slug = await rotator.getAttribute('data-current-slug');
+    const prefix = await rotator.getAttribute('data-current-prefix');
+    await page.waitForTimeout(3700);
+    expect(await rotator.getAttribute('data-current-slug')).toBe(slug);
+    expect(await rotator.getAttribute('data-current-prefix')).toBe(prefix);
+    await page.getByRole('button', { name: 'Retomar sugestões' }).click();
+    await expect.poll(async () => rotator.getAttribute('data-current-prefix'), { timeout: 5000 }).not.toBe(prefix);
   });
 
   test('snapshot visual mobile', async ({ browser }) => {
