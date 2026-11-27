@@ -136,24 +136,29 @@ const RotatingServiceText = ({ paused = false, onServiceChange, onPhraseChange }
   }
 
 
+  const appliedCategories = useRef<HeroCategoryInput[] | null>(null);
+  const [orderVersion, setOrderVersion] = useState(0);
   const [serviceIdx, setServiceIdx] = useState(0);
   const [prefixIdx, setPrefixIdx] = useState<0 | 1>(0);
 
   useEffect(() => {
+    if (paused || appliedCategories.current === categories) return;
     const { order, nextHistory } = pickNextOrder(categories);
     if (order.length === 0) return;
     orderRef.current = order;
+    appliedCategories.current = categories;
+    setOrderVersion((version) => version + 1);
     commitHistory(nextHistory);
     setServiceIdx(0);
     setPrefixIdx(0);
-  }, [categories]);
+  }, [categories, paused]);
 
   useEffect(() => {
     const current = orderRef.current[serviceIdx];
     if (!current) return;
     onServiceChange?.(current.label);
     markShown(current.slug);
-  }, [serviceIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [serviceIdx, orderVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const current = orderRef.current[serviceIdx];
@@ -163,7 +168,7 @@ const RotatingServiceText = ({ paused = false, onServiceChange, onPhraseChange }
       label: current.label,
       prefix: prefixIdx === 0 ? 'need' : 'find',
     });
-  }, [serviceIdx, prefixIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [serviceIdx, prefixIdx, orderVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (paused) return;
@@ -185,13 +190,13 @@ const RotatingServiceText = ({ paused = false, onServiceChange, onPhraseChange }
     }, HOLD_MS);
 
     return () => clearTimeout(timer);
-  }, [serviceIdx, prefixIdx, categories, paused]);
+  }, [serviceIdx, prefixIdx, categories, paused, orderVersion]);
 
   const current = orderRef.current[serviceIdx];
   if (!current) return null;
 
   const phrase = buildPhrase(current, prefixIdx === 0 ? 'need' : 'find');
-  const animKey = `${serviceIdx}-${prefixIdx}`;
+  const animKey = `${orderVersion}-${serviceIdx}-${prefixIdx}`;
 
   return (
     <span
