@@ -27,3 +27,8 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 ## Release visibility
 
 - `/admin/github-sync` reads the repository only server-side through the linked GitHub connector (admin-checked) and compares it to the commit list embedded at build time; only the latest successful `disposable-stack.yml` run counts as an approved homologation, so failed, running or missing runs never unlock publishing.
+
+## Design engineering premium — Emil Kowalski (27/11/2026)
+
+- Para qualquer trabalho visual autorizado, ler `docs/skills/EMIL_DESIGN_ENGINEERING.md` antes de editar runtime. Aplicar diagnóstico, direção de arte autoral, decisão de motion por frequência/propósito, performance, reduced motion e QA 390/768/1440; reaproveitar tokens e bibliotecas existentes.
+- Referência oficial: https://github.com/emilkowalski/skills. As regras específicas deste repositório permanecem prioritárias. Esta documentação não autoriza execução automática de scripts, instalações, mudanças de código ou deploy.
