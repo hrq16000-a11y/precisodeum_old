@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import { MapPin, Search } from 'lucide-react';
+import { MapPin, Search, Pause, Play } from 'lucide-react';
 import { Link, useNavigate } from '@/lib/router-compat';
 import RotatingServiceText from '@/components/home/RotatingServiceText';
 import UrgencyToggle from '@/components/home/UrgencyToggle';
@@ -8,7 +8,7 @@ import { useHydrated } from '@tanstack/react-router';
 import { useGeoCity } from '@/hooks/useGeoCity';
 import { useSettingValue } from '@/hooks/useSiteSettings';
 import { importWithRetry } from '@/lib/lazyWithRetry';
-import { getCategoryForService, CATEGORY_IMAGES } from '@/lib/serviceCategoryMap';
+import { CATEGORY_IMAGES } from '@/lib/serviceCategoryMap';
 import { Icon } from '@/components/ui/Icon';
 
 const SearchBar = lazy(() => importWithRetry(() => import('@/components/SearchBar')));
@@ -73,15 +73,16 @@ const CriticalHeroSearch = ({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onFocus={() => { onUpgrade(); trackCtaClick('focus'); }}
+        aria-label="O que você precisa?"
         placeholder="O que você precisa?"
-        className="min-w-0 flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/60 outline-hidden"
+        className="min-w-0 flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/60 outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
         autoComplete="off"
         inputMode="search"
       />
       <button
         type="submit"
         aria-label="Buscar profissional"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-md transition-transform active:scale-95"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-md transition-transform duration-150 motion-safe:active:scale-95 motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <Icon icon={Search} className="h-5 w-5" />
       </button>
@@ -95,9 +96,16 @@ const CriticalHeroSearch = ({
 
 
 const HeroBanner = () => {
-  const [displayedImage, setDisplayedImage] = useState(CATEGORY_IMAGES.instalacoes);
-  const [nextImage, setNextImage] = useState<string | null>(null);
-  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
+  const displayedImage = CATEGORY_IMAGES.instalacoes;
+  const [suggestionsPaused, setSuggestionsPaused] = useState(false);
+  const [motionAllowed, setMotionAllowed] = useState(false);
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setMotionAllowed(!preference.matches);
+    sync();
+    preference.addEventListener('change', sync);
+    return () => preference.removeEventListener('change', sync);
+  }, []);
   const [enhancedSearch, setEnhancedSearch] = useState(false);
   const { city: geoCity } = useGeoCity();
   const heroHydrated = useHydrated();
@@ -108,21 +116,6 @@ const HeroBanner = () => {
   const ctaSecondaryText = useSettingValue('hero_cta_secondary_text');
   const ctaSecondaryLink = useSettingValue('hero_cta_secondary_link');
 
-
-  const handleServiceChange = useCallback((service: string) => {
-    if (!heroImageLoaded) return;
-    const cat = getCategoryForService(service);
-    const newImg = CATEGORY_IMAGES[cat];
-    if (newImg !== displayedImage) {
-      setNextImage(newImg);
-      const img = new Image();
-      img.onload = () => {
-        setDisplayedImage(newImg);
-        setNextImage(null);
-      };
-      img.src = newImg;
-    }
-  }, [displayedImage, heroImageLoaded]);
 
   useEffect(() => {
     if (enhancedSearch) return;
@@ -152,7 +145,7 @@ const HeroBanner = () => {
 
   return (
     <section
-      className="relative overflow-visible py-6 sm:py-8 md:overflow-hidden md:py-20 md:min-h-[520px] lg:min-h-[560px]"
+      className="relative isolate overflow-visible py-9 sm:py-12 md:overflow-hidden md:py-16 md:min-h-[520px] lg:min-h-[560px]"
       style={{ minHeight: 340 }}
     >
 
@@ -173,62 +166,43 @@ const HeroBanner = () => {
           decoding="async"
           // @ts-expect-error - non-standard but supported by Chromium for LCP hinting
           elementtiming="hero-lcp"
-          className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700"
+          className="absolute inset-0 h-full w-full object-cover object-center"
           style={{ width: '100%', height: '100%' }}
-          onLoad={() => setHeroImageLoaded(true)}
         />
       </picture>
-
-
-      {nextImage && (
-        <picture className="absolute inset-0 h-full w-full">
-          <source srcSet={heroSrcSet(nextImage, 'avif')} sizes="100vw" type="image/avif" />
-          <source srcSet={heroSrcSet(nextImage, 'webp')} sizes="100vw" type="image/webp" />
-          <img
-            src={nextImage.replace(/\.webp$/i, '.jpg')}
-            alt=""
-            aria-hidden="true"
-            width={1920}
-            height={768}
-            sizes="100vw"
-            loading="eager"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover object-center animate-fade-in"
-            style={{ animationDuration: '800ms', width: '100%', height: '100%' }}
-          />
-        </picture>
-      )}
 
 
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(135deg, hsl(var(--primary) / 0.85) 0%, hsl(var(--primary) / 0.7) 100%)`,
+          background: `linear-gradient(135deg, hsl(var(--primary) / 0.96) 0%, hsl(var(--primary) / 0.78) 100%)`,
         }}
       />
 
       {/* Stronger bottom shadow gradient for legibility on mobile */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/40 via-black/15 to-transparent" />
 
-      <div className="container relative z-10 flex flex-col items-center text-center hero-entrance">
-        <div className="w-full max-w-full px-2">
+      <div className="container relative z-10 flex flex-col items-center text-center px-4 sm:px-6">
+        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-4 py-2 text-xs font-semibold tracking-wide text-primary-foreground"><Icon icon={MapPin} className="size-4 shrink-0" /> Serviços perto de você</p>
+        <div className="w-full max-w-4xl px-2">
           <h1
-            className="font-display font-black text-primary-foreground max-w-full text-[clamp(0.95rem,4vw,3.25rem)] leading-[1.1] sm:leading-[1.08] tracking-[-0.015em] [text-wrap:balance]"
+            className="font-display font-black text-primary-foreground max-w-full text-[clamp(1.8rem,4.5vw,3.75rem)] leading-[1.12] tracking-[-0.035em] [text-wrap:balance]"
             style={{
               textShadow: '0 2px 8px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3)',
               // Reserva altura mínima (~2 linhas) para evitar CLS quando o rotator alterna frases (mobile-first).
-              minHeight: 'clamp(2.1rem, 8.8vw, 7.15rem)',
+              minHeight: 'clamp(6.3rem, 10vw, 8.5rem)',
             }}
           >
             <RotatingServiceText
-              onServiceChange={handleServiceChange}
+              paused={suggestionsPaused || !motionAllowed}
               onPhraseChange={handlePhraseChange}
             />
           </h1>
         </div>
 
-        <div className="relative z-30 mt-4 w-full max-w-2xl md:mt-6 hero-search-wrapper min-h-[64px]">
-          <div className="animate-glow-ring rounded-full">
+        <p className="max-w-xl text-sm leading-relaxed text-primary-foreground/95 sm:text-base">Descreva o serviço que você precisa e encontre profissionais da sua região.</p>
+        <div className="relative z-30 mt-5 w-full max-w-2xl md:mt-6 hero-search-wrapper min-h-[64px]">
+          <div className="rounded-full ring-4 ring-primary-foreground/15 transition-shadow duration-150 focus-within:ring-primary-foreground/50 motion-reduce:transition-none">
             {enhancedSearch ? (
               <Suspense fallback={<CriticalHeroSearch onUpgrade={() => setEnhancedSearch(true)} phraseRef={phraseRef} />}>
                 <SearchBar />
@@ -250,10 +224,19 @@ const HeroBanner = () => {
           </div>
         </div>
 
-        <div className="relative z-10 mt-4 flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
+        <div className="mt-2 min-h-10 flex items-center justify-center">
+          {motionAllowed && (
+            <button type="button" aria-pressed={suggestionsPaused} onClick={() => setSuggestionsPaused((value) => !value)} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs font-medium text-primary-foreground/90 hover:bg-primary-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground transition-colors duration-150">
+              <Icon icon={suggestionsPaused ? Play : Pause} className="size-3.5" />
+              {suggestionsPaused ? "Retomar sugestões" : "Pausar sugestões"}
+            </button>
+          )}
+        </div>
+
+        <div className="relative z-10 mt-2 flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
           <Link
             to={ctaPrimaryLink || '/cadastro'}
-            className="inline-flex items-center justify-center rounded-full bg-secondary px-5 py-2.5 text-sm font-bold text-secondary-foreground shadow-md transition-transform hover:scale-105 active:scale-95 sm:bg-transparent sm:px-0 sm:py-0 sm:shadow-none sm:text-primary-foreground/80 sm:font-semibold sm:hover:underline sm:underline-offset-2"
+            className="inline-flex items-center justify-center rounded-full bg-secondary px-5 py-2.5 text-sm font-bold text-secondary-foreground shadow-md transition-transform duration-150 motion-safe:hover:scale-[1.02] motion-safe:active:scale-95 motion-reduce:transition-none sm:bg-transparent sm:px-0 sm:py-0 sm:shadow-none sm:text-primary-foreground/80 sm:font-semibold sm:hover:underline sm:underline-offset-2"
           >
             {ctaPrimaryLinkText || 'Cadastrar agora →'}
           </Link>
