@@ -27,3 +27,6 @@ Diretrizes incrementais de referência visual e qualidade. Antes de editar códi
 ## Release visibility
 
 - `/admin/github-sync` reads the repository only server-side through the linked GitHub connector (admin-checked) and compares it to the commit list embedded at build time; only the latest successful `disposable-stack.yml` run counts as an approved homologation, so failed, running or missing runs never unlock publishing.
+
+## Padrão anti-site genérico — R8/10
+- Para trabalho visual autorizado, ler `docs/skills/ANTI_GENERIC_EXPERIENCE.md` antes do código. A diretriz integra TasteSkill, Transitions.dev, React Bits e Emil Kowalski; não substitui as regras específicas deste repositório.
