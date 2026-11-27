@@ -1,9 +1,9 @@
 # Design engineering premium — análise e adoção Emil Kowalski
 
-**Estado:** R0 — diagnóstico estático e diretriz documental; implementação NÃO iniciada.
+**Estado:** R0 + R1.3 — diagnóstico estático e auditoria inicial desktop/mobile; implementação NÃO iniciada.
 **Data:** 27/11/2026 • **Repositório:** hrq16000-a11y/precisodeum_old • **Checkpoint analisado da main:** `500b60f8ff9f851a448d11ff1cbeeb96d9af4189`.
 
-Este documento é incremental. As regras locais de AGENTS.md, DESIGN.md, segurança, SEO, arquitetura, publicação, dados e funis prevalecem. Não autoriza alterações de runtime, instalações, custos, merge ou deploy. Não substitui a homologação visual da versão efetivamente publicada. O navegador ao vivo teve timeout nesta rodada; nenhuma inspeção de screenshots, teste visual, medição de performance ou aprovação de produção é reivindicada.
+Este documento é incremental. As regras locais de AGENTS.md, DESIGN.md, segurança, SEO, arquitetura, publicação, dados e funis prevalecem. Não autoriza alterações de runtime, instalações, custos, merge ou deploy. Não substitui a homologação visual da versão efetivamente publicada. Auditoria ao vivo posterior registrada na seção 7; não implica homologação da versão publicada.
 
 ## 1. Diagnóstico por projeto (evidência de leitura)
 
@@ -74,3 +74,13 @@ Se não existirem tokens equivalentes, avaliar curva de entrada/saída `cubic-be
 GO para implementação somente com baseline visual, brief próprio da marca, propósito de cada movimento, seleção dos módulos pertinentes e uma micro-superfície definida. GO para release somente com gates locais, comparação real nos viewports, interação funcional, reduced-motion, zero regressão crítica de performance/conversão, sem novos riscos de acessibilidade, SSR/SEO e privacidade. NO-GO se movimento interferir na ação, se houver conteúdo invisível, template copiado, alteração comercial incidental, bloqueio de dados, dependência sem justificativa ou validação inconclusiva.
 
 **Registro desta rodada:** leitura de referências e arquivos; documentação proposta/registrada em branch isolada. Nenhum código de aplicação, dependência, banco, DNS ou configuração de hospedagem foi alterado por esta diretriz.
+
+## 7. R1.3 — Auditoria visual inicial da Home (27/11/2026)
+
+- **URL pública observada:** https://precisodeum.com.br/
+- **Viewport medido:** 390 × 844 CSS px, scrollWidth 371; 1440 × 900 CSS px, scrollWidth 1421 (duas medições).
+- **Evidência:** captura(s) do primeiro viewport, leitura de DOM/estado público. Hero de busca com fotografia e termo rotativo de profissão (eletricista, azulejista, carpinteiro, cabeleireiro observados). Logo e categorias inicialmente em placeholder; nas capturas posteriores logo e conteúdo patrocinado aparecem. CTA de cadastro, oportunidade, anunciante e anúncio patrocinado disputam atenção com a busca. Consentimento permanece no rodapé; no mobile cobre parte do conteúdo abaixo do hero. Sem overflow nas larguras observadas. Domínio canônico consta no __root.tsx do repositório, mas não foi identificado o SHA implantado; versão alternativa precisodeum_n não deve receber conclusões de produção por inferência.
+- **P0 — prioridade antes de prototipar:** Reservar espaço estável para carregamento e anúncios, evitar que consentimento ou mídia patrocinada bloqueie ações de busca, garantir rotatividade com fallback estático e texto acessível. Verificar versão implantada antes de qualquer edição.
+- **P1 — direção de arte e motion:** Hierarquizar intenção consumidor versus anúncio/contratante, reforçar conteúdo local e busca; manter anúncios, modelo comercial e rankings. Reutilizar MOTION_SYSTEM.md, limitar animação do favorito ao feedback imediato; não animar resultados a cada alteração.
+- **Skills aplicáveis:** find-animation-opportunities, remove-animations, review-animations, emil-design-eng, animation-performance, break-ui, mobile-native; prototype após diagnóstico completo.
+- **Limites:** Tablet, outras rotas, teclado, reduced-motion, LCP/CLS/INP, build/deployment SHA e funil completo pendentes. Não houve submissão de formulário, WhatsApp, alteração de consentimento, código, dependências, dados, produção ou merge. Não incluímos screenshots no Git. Esta é baseline inicial, não homologação.
